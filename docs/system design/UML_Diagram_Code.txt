@@ -1,0 +1,236 @@
+@startuml
+skinparam linetype ortho
+skinparam layout compact
+skinparam classAttributeIconSize 0
+skinparam nodeMargin 20
+
+' --- Package: UI (Presentation Layer) ---
+package "src.ui" {
+    class VideoDownloaderGUI {
+        <b>VideoDownloaderGUI</b>
+        --
+        + _onFetchClicked()
+        + _onDownloadClicked()
+        + _displayVideoInfo(info)
+        + updateDownloadProgress(d)
+        + _showHistory()
+        + _showSettings()
+        + reDownload(url, path)
+    }
+
+    class HistoryView {
+        <b>HistoryView</b>
+        --
+        + populateHistory()
+        + redownloadSelected()
+        + removeSelected()
+        + clearAll()
+    }
+
+    class SettingsDialog {
+        <b>SettingsDialog</b>
+        --
+        + _saveSettings()
+        + _loadCurrentSettings()
+        + _resetToDefaults()
+    }
+
+    class CustomWidgets {
+        <b><<UI Components>></b>
+        ModernButton
+        ModernEntry
+        CustomDropdown
+        AnimatedProgressBar
+    }
+
+    class CustomMessageBox {
+        <b><<Static>></b>
+        <b>CustomMessageBox</b>
+        --
+        + showInfo(...)
+        + showError(...)
+        + askYesNo(...)
+    }
+
+    class Theme {
+        <b><<Static>></b>
+        <b>Theme</b>
+        --
+        + ACCENT_COLOR
+        + BG_COLOR
+        + setTheme(mode)
+    }
+}
+
+' --- Package: Core (Business Logic Layer) ---
+package "src.core" {
+    class DownloadController {
+        <b>DownloadController</b>
+        --
+        + fetchVideoInfo(url, callbacks...)
+        + startDownload(config, callbacks...)
+        + getHistory()
+        + removeHistoryEntry(index)
+        + clearHistory()
+    }
+
+    class DownloadManager {
+        <b><<Facade>></b>
+        <b>DownloadManager</b>
+        --
+        {static} + getVideoInfo(url)
+        {static} + downloadVideo(...)
+        {static} + getProviderForUrl(url)
+        {static} + isUrlSupported(url)
+    }
+    note right of DownloadManager
+        Provides a simple, static interface
+        to the complex downloader subsystem.
+    end note
+}
+
+' --- Package: Services ---
+package "src.services" {
+    class HistoryService {
+        <b>HistoryService</b>
+        --
+        + addEntry(...)
+        + getHistory()
+        + removeEntry(index)
+        + clearHistory()
+        - _loadHistory()
+        - _saveHistory()
+    }
+
+    interface NotificationService {
+        <b><<Interface>></b>
+        <b>NotificationService</b>
+        --
+        + sendNotification(title, msg)
+    }
+
+    class DesktopNotifier {
+        <b>DesktopNotifier</b>
+        --
+        + sendNotification(title, msg)
+    }
+
+    NotificationService <|-- DesktopNotifier
+}
+
+' --- Package: Utils ---
+package "src.utils" {
+    class AssetLoader {
+        <b><<Static>></b>
+        <b>AssetLoader</b>
+        --
+        {static} + loadConfig()
+        {static} + loadTranslations(lang)
+        {static} + getTranslation(key, lang)
+        {static} + getImagePath(filename)
+    }
+
+    class SettingsManager {
+        <b><<Static>></b>
+        <b>SettingsManager</b>
+        --
+        {static} + loadSettings()
+        {static} + saveSettings(settings)
+        {static} + getSetting(key)
+        {static} + setSetting(key, value)
+    }
+}
+
+' --- Package: Data Models ---
+package "src.data_models" {
+    class VideoInfo {
+        <b>VideoInfo</b>
+        --
+        + title
+        + duration
+        + formats
+    }
+    class PlaylistInfo {
+        <b>PlaylistInfo</b>
+        --
+        + title
+        + videos
+    }
+    class DownloadConfig {
+        <b>DownloadConfig</b>
+        --
+        + url
+        + outputPath
+        + quality
+        + formatType
+    }
+}
+
+' --- Package: Downloaders (Strategy Layer) ---
+package "src.downloaders" {
+    class DownloaderFactory {
+        <b><<Factory>></b>
+        <b>DownloaderFactory</b>
+        --
+        {static} + getDownloader(url)
+        {static} + registerDownloader(dl)
+        {static} + isSupported(url)
+    }
+    
+    interface BaseDownloader {
+        <b><<Interface>></b>
+        <b>BaseDownloader (Strategy)</b>
+        --
+        {abstract} + canHandle(url)
+        {abstract} + getVideoInfo(url)
+        {abstract} + downloadVideo(...)
+        {abstract} + getProviderName()
+    }
+    
+    class YouTubeDownloader <<Strategy>>
+    class FacebookDownloader <<Strategy>>
+    class InstagramDownloader <<Strategy>>
+    class TikTokDownloader <<Strategy>>
+    class TwitterDownloader <<Strategy>>
+    
+    BaseDownloader <|-- YouTubeDownloader
+    BaseDownloader <|-- FacebookDownloader
+    BaseDownloader <|-- InstagramDownloader
+    BaseDownloader <|-- TikTokDownloader
+    BaseDownloader <|-- TwitterDownloader
+}
+
+' --- Relationships (Flow of Control) ---
+VideoDownloaderGUI --> DownloadController : "delegates actions"
+HistoryView --> DownloadController : "calls >"
+VideoDownloaderGUI ..> AssetLoader : "uses"
+VideoDownloaderGUI ..> SettingsManager : "uses"
+SettingsDialog --> SettingsManager : "manages >"
+SettingsDialog ..> AssetLoader : "uses"
+DownloadController --> HistoryService : "uses >"
+DownloadController --> NotificationService : "uses >"
+DownloadController --> DownloadManager : "calls (async)"
+DownloadManager --> DownloaderFactory : "requests strategy"
+DownloaderFactory *--> "1..*" BaseDownloader : "holds registry"
+DownloaderFactory ..> BaseDownloader : "calls canHandle()"
+DownloadManager ..> BaseDownloader : "calls downloadVideo()"
+BaseDownloader ..> VideoInfo : "returns >"
+BaseDownloader ..> PlaylistInfo : "returns >"
+DownloadController ..> DownloadConfig : "uses >"
+SettingsManager ..> AssetLoader : "uses (for defaults)"
+
+' --- Use of Notes to Explain Relationships ---
+note left of DownloadController
+    Handles communication between
+    the UI and the business logic layer.
+end note
+
+note right of HistoryService
+    Manages the download history.
+end note
+
+note left of NotificationService
+    Interface to send notifications
+    about download progress or errors.
+end note
+@enduml

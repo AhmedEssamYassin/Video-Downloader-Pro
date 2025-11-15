@@ -1,0 +1,109 @@
+{
+    "language": "English",
+    "language_code": "en",
+    "translations": {
+        "app_title": "Video Downloader Pro",
+        "app_subtitle": "Download videos from YouTube, Facebook and more",
+        "buttons": {
+            "fetch_info": "Fetch Info",
+            "download_now": "DOWNLOAD NOW",
+            "browse": "Browse",
+            "history": "History",
+            "cancel": "Cancel",
+            "ok": "OK",
+            "yes": "Yes",
+            "no": "No",
+            "retry": "Retry",
+            "close": "Close",
+            "save": "Save Changes"
+        },
+        "labels": {
+            "video_url": "Video URL",
+            "video_title": "Video Title",
+            "output_format": "Output Format",
+            "video_quality": "Video Quality",
+            "save_location": "Save Location",
+            "status": "Status",
+            "progress": "Progress"
+        },
+        "formats": {
+            "video_mp4": "Video (MP4)",
+            "audio_mp3": "Audio (MP3)"
+        },
+        "status": {
+            "ready": "Ready to download",
+            "fetching": "Fetching video information...",
+            "downloading": "Downloading...",
+            "processing": "Processing...",
+            "completed": "Download completed!",
+            "failed": "Operation failed"
+        },
+        "messages": {
+            "paste_url": "Paste a URL and click Fetch Info to get started",
+            "enter_url": "Please enter a video URL",
+            "invalid_path": "Output directory does not exist",
+            "unsupported_url": "This URL is not supported",
+            "download_in_progress": "Please wait for the current download to complete",
+            "download_success": "Video downloaded successfully",
+            "download_failed": "Download failed"
+        },
+        "history": {
+            "title": "Download History",
+            "subtitle": "View and manage your downloaded videos",
+            "search_placeholder": "Search downloads...",
+            "redownload": "Re-download",
+            "remove": "Remove",
+            "clear_all": "Clear All",
+            "confirm_clear": "Are you sure you want to clear all history?\n\nThis action cannot be undone.",
+            "no_selection": "Please select a video",
+            "cleared": "All history has been cleared",
+            "removed": "Entry removed from history"
+        },
+        "settings": {
+            "title": "Settings",
+            "subtitle": "Customize your download experience",
+            "appearance": {
+                "title": "Appearance",
+                "theme": "Theme",
+                "theme_desc": "Choose between dark and light theme. Changes apply immediately."
+            },
+            "language": {
+                "title": "Language",
+                "select": "Select Language",
+                "restart_required": "⚠️ Changing language requires restarting the application to take full effect."
+            },
+            "downloads": {
+                "title": "Downloads",
+                "default_path": "Default Download Location",
+                "default_quality": "Default Video Quality",
+                "default_format": "Default Output Format"
+            },
+            "notifications": {
+                "title": "Notifications",
+                "enable": "Enable desktop notifications",
+                "desc": "Get notified when downloads complete successfully or fail."
+            },
+            "advanced": {
+                "title": "Advanced",
+                "remember_path": "Remember last download location",
+                "reset_defaults": "Reset to Defaults",
+                "reset_title": "Reset Settings",
+                "reset_confirm": "Are you sure you want to reset all settings to their default values?\n\nThis cannot be undone."
+            },
+            "restart_title": "Restart Required",
+            "restart_message": "Settings saved! Please restart the application for language changes to take effect.",
+            "saved_title": "Settings Saved",
+            "saved_message": "Your settings have been saved successfully!",
+            "save_error": "Failed to save settings. Please try again.",
+            "unsaved_title": "Unsaved Changes",
+            "unsaved_message": "You have unsaved changes. Are you sure you want to close without saving?"
+        },
+        "errors": {
+            "fetch_failed": "Failed to fetch video info",
+            "download_failed": "Download failed",
+            "path_not_exist": "Download path does not exist",
+            "folder_open_failed": "Could not open folder",
+            "unsupported_platform": "Unsupported platform"
+        }
+    }
+}

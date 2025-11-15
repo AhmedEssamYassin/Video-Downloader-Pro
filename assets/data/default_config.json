@@ -1,0 +1,50 @@
+{
+  "version": "1.0.0",
+  "app_name": "Video Downloader Pro",
+  "settings": {
+    "default_download_path": "",
+    "default_quality": "best",
+    "default_format": "MP4",
+    "theme": "light",
+    "language": "en",
+    "notifications_enabled": true,
+    "auto_fetch_info": false,
+    "remember_last_path": true,
+    "max_concurrent_downloads": 1
+  },
+  "download_presets": [
+    {
+      "name": "High Quality Video",
+      "quality": "1080p",
+      "format": "MP4"
+    },
+    {
+      "name": "Standard Quality",
+      "quality": "720p",
+      "format": "MP4"
+    },
+    {
+      "name": "Audio Only",
+      "quality": "best",
+      "format": "MP3"
+    }
+  ],
+  "supported_platforms": [
+    "YouTube",
+    "Facebook",
+    "Instagram",
+    "TikTok",
+    "Twitter/X"
+  ],
+  "quality_options": [
+    "best",
+    "1080p",
+    "720p",
+    "480p",
+    "360p"
+  ],
+  "format_options": [
+    "MP4",
+    "MP3"
+  ]
+}
