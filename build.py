@@ -19,45 +19,74 @@ except ImportError:
     sys.exit(1)
 
 try:
-    import yt_dlp.extractor
-    from yt_dlp.extractor import _ALL_CLASSES
+    import yt_dlp
 except ImportError:
     print("ERROR: yt_dlp not found. Install it with: pip install yt-dlp")
     sys.exit(1)
 
 # Clean previous builds
-for dir in ['build', 'dist']:
-    if Path(dir).exists():
-        print(f"Cleaning {dir}...")
-        shutil.rmtree(dir)
+for dirName in ['build', 'dist']:
+    if Path(dirName).exists():
+        print(f"Cleaning {dirName}...")
+        shutil.rmtree(dirName)
 
 # Get the path to customtkinter's internal assets
-ctk_assets_path = Path(customtkinter.__file__).parent / "assets"
-print(f"CustomTkinter assets path: {ctk_assets_path}")
+ctkAssetsPath = Path(customtkinter.__file__).parent / "assets"
+print(f"CustomTkinter assets path: {ctkAssetsPath}")
 
 # Check if icon exists
-icon_path = Path("assets/images/icon.ico")
-if not icon_path.exists():
-    print(f"WARNING: Icon not found at {icon_path}. Build will continue without icon.")
-    icon_arg = []
+iconPath = Path("assets/images/icon.ico")
+if not iconPath.exists():
+    print(f"WARNING: Icon not found at {iconPath}. Build will continue without icon.")
+    iconArg = []
 else:
-    icon_arg = [f'--icon={icon_path}']
-    print(f"Using icon: {icon_path}")
+    iconArg = [f'--icon={iconPath}']
+    print(f"Using icon: {iconPath}")
 
 # Generate hooks for yt_dlp extractors 
 # yt_dlp dynamically loads all these, so PyInstaller misses them.
-yt_dlp_hooks = []
+ytDlpHooks = []
 try:
-    yt_dlp_hooks = [f'--hidden-import=yt_dlp.extractor.{ie.IE_NAME}' for ie in _ALL_CLASSES]
-    print(f"Found {len(yt_dlp_hooks)} yt_dlp extractors.")
+    # Updated approach: collect all extractor modules
+    from yt_dlp.extractor import extractors
+    
+    # Get all extractor names from the lazy_extractors or gen_extractors
+    extractorNames = []
+    try:
+        # Try to import the list of extractors
+        from yt_dlp.extractor.extractors import _ALL_CLASSES
+        extractorNames = [ie.IE_NAME for ie in _ALL_CLASSES if hasattr(ie, 'IE_NAME')]
+    except (ImportError, AttributeError):
+        # Fallback: use a broader hidden-import approach
+        print("Using fallback method for yt_dlp extractors")
+        ytDlpHooks = [
+            '--hidden-import=yt_dlp.extractor.extractors',
+            '--hidden-import=yt_dlp.extractor.common',
+            '--hidden-import=yt_dlp.extractor.generic',
+        ]
+    
+    if extractorNames:
+        ytDlpHooks = [f'--hidden-import=yt_dlp.extractor.{name}' for name in extractorNames]
+        print(f"Found {len(ytDlpHooks)} yt_dlp extractors.")
+    elif not ytDlpHooks:
+        # Final fallback
+        ytDlpHooks = ['--hidden-import=yt_dlp.extractor']
+        print("Using generic yt_dlp extractor import")
+        
 except Exception as e:
     print(f"WARNING: Could not generate yt_dlp hooks: {e}")
+    # Fallback to basic imports
+    ytDlpHooks = [
+        '--hidden-import=yt_dlp.extractor',
+        '--hidden-import=yt_dlp.extractor.common',
+        '--hidden-import=yt_dlp.extractor.generic',
+    ]
 
 # Generate hooks for plyer backends (optional - for notifications)
-plyer_hooks = []
+plyerHooks = []
 try:
     import plyer.platforms.win.notification
-    plyer_hooks = ['--hidden-import=plyer.platforms.win.notification']
+    plyerHooks = ['--hidden-import=plyer.platforms.win.notification']
     print("Added plyer Windows backend.")
 except ImportError:
     print("WARNING: plyer not found. Notifications may not work.")
@@ -69,17 +98,18 @@ buildCommand = [
     '--onefile',
     '--windowed',
     '--add-data=assets;assets',
-    f'--add-data={ctk_assets_path};customtkinter/assets',
+    f'--add-data={ctkAssetsPath};customtkinter/assets',
+    '--collect-all=yt_dlp',  # This ensures all yt_dlp modules are included
     '--clean',
     '--noconfirm',
 ]
 
 # Add icon if it exists
-buildCommand.extend(icon_arg)
+buildCommand.extend(iconArg)
 
 # Add hooks
-buildCommand.extend(yt_dlp_hooks)
-buildCommand.extend(plyer_hooks)
+buildCommand.extend(ytDlpHooks)
+buildCommand.extend(plyerHooks)
 
 print("\n" + "="*50)
 print("Running PyInstaller with command:")
