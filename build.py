@@ -3,8 +3,13 @@ Build script for creating executable with assets
 """
 
 import sys
+import os
 import shutil
 from pathlib import Path
+
+if sys.platform == 'win32':
+    sys.stdout.reconfigure(encoding='utf-8')
+    sys.stderr.reconfigure(encoding='utf-8')
 
 try:
     import PyInstaller.__main__
@@ -119,8 +124,8 @@ print("="*50 + "\n")
 try:
     PyInstaller.__main__.run(buildCommand)
     print("\n" + "="*50)
-    print("✅ Build complete! Executable in dist/ folder")
+    print("[SUCCESS] Build complete! Executable in dist/ folder")
     print("="*50)
 except Exception as e:
-    print(f"\n❌ Build failed: {e}")
+    print(f"\n[ERROR] Build failed: {e}")
     sys.exit(1)
