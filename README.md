@@ -1,7 +1,7 @@
 # Video Downloader Pro - Modular Structure compliant with SOLID principles and Design patterns 
 
 ## System Design (UML Diagram)
-![UML Diagram](./assets/diagrams/UML_Diagram.svg)
+![UML Diagram](./docs/system%20design/UML_Diagram.svg)
 
 ## 📁 Project Structure
 
