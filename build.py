@@ -17,7 +17,7 @@ PyInstaller.__main__.run([
     '--name=VideoDownloaderPro',
     '--onefile',
     '--windowed',
-    '--icon=assets/images/icon.png',
+    '--icon=assets/images/icon.ico',
     '--add-data=assets;assets',
     '--clean',
 ])
