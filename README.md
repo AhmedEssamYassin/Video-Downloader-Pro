@@ -3,7 +3,7 @@
 ## System Design (UML Diagram)
 ![UML Diagram](./docs/system%20design/UML_Diagram.svg)
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Video Downloader/
@@ -60,46 +60,42 @@ Video Downloader/
 │── main.py                                 # Application entry point
 │
 │
-├── build/                                  # PyInstaller build folder
-├── dist/
-│   └── VideoDownloaderPro.exe              # Final portable executable
-│
 ├── requirements.txt                        # Project dependencies
 ├── README.md                               # Project documentation
 └── VideoDownloaderPro.spec                 # PyInstaller config file
 ```
 
-## ✨ Key Features
+## Key Features
 
 ### Platform Support
-- 🎥 **YouTube** - Videos, playlists, quality selection
-- 📘 **Facebook** - Public videos and posts
-- 📷 **Instagram** - Reels, posts, stories
-- 🎵 **TikTok** - Videos and audio from photo posts
-- 🐦 **Twitter/X** - Video tweets
+- **YouTube** - Videos, playlists, quality selection
+- **Facebook** - Public videos and posts
+- **Instagram** - Reels, posts, stories
+- **TikTok** - Videos and audio from photo posts
+- **Twitter/X** - Video tweets
 
 ### Download Options
-- 📹 **Video Formats** - MP4 with quality selection (best, 1080p, 720p, 480p, 360p)
-- 🎵 **Audio Extraction** - MP3 format with 192kbps quality
-- ✏️ **Custom Naming** - Edit video title before downloading
-- 📁 **Flexible Output** - Choose download location with quick folder access
+- **Video Formats** - MP4 with quality selection (best, 1080p, 720p, 480p, 360p)
+- **Audio Extraction** - MP3 format with 192kbps quality
+- **Custom Naming** - Edit video title before downloading
+- **Flexible Output** - Choose download location with quick folder access
 
 ### User Experience
-- 🎨 **Modern Dark Theme** - Eye-friendly interface with smooth animations
-- 📊 **Progress Tracking** - Real-time download progress with visual feedback
-- 📋 **Download History** - View, search, and manage past downloads
-- 🔄 **Re-download** - Easy re-download from history
-- 🔔 **Desktop Notifications** - Get notified when downloads complete
-- 🎯 **URL Detection** - Automatic platform detection and validation
+- **Modern Dark Theme** - Eye-friendly interface with smooth animations
+- **Progress Tracking** - Real-time download progress with visual feedback
+- **Download History** - View, search, and manage past downloads
+- **Re-download** - Easy re-download from history
+- **Desktop Notifications** - Get notified when downloads complete
+- **URL Detection** - Automatic platform detection and validation
 
 ### Technical Highlights
-- ⚡ **Asynchronous Downloads** - Non-blocking UI during downloads
-- 🧩 **Modular Architecture** - SOLID principles and design patterns
-- 🔌 **Extensible** - Easy to add new platforms without breaking existing code
-- 🛡️ **Error Handling** - Comprehensive error messages and recovery
+- **Asynchronous Downloads** - Non-blocking UI during downloads
+- **Modular Architecture** - SOLID principles and design patterns
+- **Extensible** - Easy to add new platforms without breaking existing code
+- **Error Handling** - Comprehensive error messages and recovery
 ---
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 ### Separation of Concerns + SOLID Principles
 
@@ -155,13 +151,13 @@ Downloaded File + History Entry
 ## 🎯 SOLID Principles Applied
 
 ### S - Single Responsibility Principle
-✅ Each module has one clear purpose:
+Each module has one clear purpose:
 - GUI only handles presentation
 - Controller only manages business logic
 - Each downloader only handles one platform
 
 ### O - Open/Closed Principle ⭐
-✅ **Open for extension, closed for modification:**
+**Open for extension, closed for modification:**
 ```python
 # Adding a new platform (e.g., Instagram)
 class InstagramDownloader(BaseDownloader):
@@ -174,15 +170,15 @@ DownloaderFactory.registerDownloader(InstagramDownloader())
 ```
 
 ### L - Liskov Substitution Principle
-✅ Any `BaseDownloader` implementation can be substituted for another without breaking the application
+Any `BaseDownloader` implementation can be substituted for another without breaking the application
 
 ### I - Interface Segregation Principle
-✅ Clean, minimal abstract interface in `BaseDownloader` with only necessary methods
+Clean, minimal abstract interface in `BaseDownloader` with only necessary methods
 
 ### D - Dependency Inversion Principle
-✅ High-level modules (GUI, Controller) depend on abstractions (DownloadManager interface), not concrete implementations
+High-level modules (GUI, Controller) depend on abstractions (DownloadManager interface), not concrete implementations
 
-## 🔄 Open/Closed Principle Deep Dive
+## Open/Closed Principle Deep Dive
 
 ### The Problem It Solves
 
@@ -298,7 +294,7 @@ main.py (Application Entry Point)
 - **Custom widgets**: Easy to create and integrate new UI components
 - **Format support**: Easy to add new output formats (WebM, AVI, etc.)
 
-## 🔄 Future Enhancement Ideas
+## Future Enhancement Ideas
 
 ### Potential Platform Additions (OCP Makes This Easy!)
 
@@ -367,7 +363,7 @@ class NewPlatformDownloader(BaseDownloader):
 
 That's it! One file = one new platform support! 🎉
 
-## 📝 Usage Example
+## Usage Example
 
 ```python
 # Example 1: Using the controller independently
