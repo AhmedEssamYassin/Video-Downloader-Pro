@@ -1,69 +1,6 @@
 # Video Downloader Pro - Modular Structure compliant with SOLID principles and Design patterns 
 
-## System Design (UML Diagram)
-![UML Diagram](./docs/system%20design/UML_Diagram.svg)
-
-## Project Structure
-
-```
-Video Downloader/
-│
-├── assets/
-│   ├── data/
-│   │   ├── default_config.json
-│   │   └── translations/
-│   │       ├── ar.json
-│   │       └── en.json
-│   ├── images/
-│   │   ├── icon.ico
-│   │   └── icon.png
-│   └── README.md
-|
-├── src/
-│   │
-│   ├── core/
-│   │   ├── __init__.py
-│   │   └── download_controller.py          # Business logic controller
-│   │   └── download_manager.py             # Download operations facade
-│   │
-│   ├── data_models/
-│   │   ├── __init__.py
-│   │   └── models.py                       # Data models (VideoInfo, DownloadConfig)
-│   │
-│   ├── downloaders/
-│   │   ├── __init__.py
-│   │   └── base_downloader.py              # Abstract base class
-│   │   └── downloader_factory.py           # Factory for creating downloaders
-│   │   └── facebook_downloader.py          # Facebook implementation
-│   │   └── youtube_downloader.py           # YouTube implementation
-│   │   └── instagram_downloader.py         # Instagram implementation
-│   │   └── tiktok_downloader.py            # Tiktok implementation
-│   │   └── twitter_downloader.py           # Twitter/X implementation
-│   │
-|   ├── services/
-│   │   ├── __init__.py
-│   │   └── history_service.py              # A service for history management (load, save, add, get ...)
-│   │   └── notification_service.py         # A service for notifications (send desktop notifications)
-│   │
-│   ├── ui/
-│   │   ├── __init__.py
-│   │   └── theme.py                        # UI theme configuration
-│   │   └── custom_widgets.py               # Custom UI components
-│   │   └── history_view.py                 # Download history window
-│   │   └── gui.py                          # Main GUI application
-|
-|   ├── utils/
-│   │   ├── __init__.py
-│   │   └── asset_loader.py                 # Asset loader utility for accessing application assets
-│   │   └── settings_manager.py             # Settings manager for user preferences and configuration persistence
-|
-│── main.py                                 # Application entry point
-│
-│
-├── requirements.txt                        # Project dependencies
-├── README.md                               # Project documentation
-└── VideoDownloaderPro.spec                 # PyInstaller config file
-```
+> A robust, unified desktop application for downloading media from major platforms (YouTube, Facebook, Instagram, TikTok, X) while serving as a practical reference implementation of SOLID principles and Design Patterns in Python. By leveraging the Open/Closed Principle through a modular Strategy and Factory pattern architecture, Video Downloader Pro ensures that support for new platforms can be added as isolated plugins without modifying existing code. The result is a highly maintainable, scalable tool that delivers a modern, asynchronous user experience without the technical debt common in multi-platform scrapers.
 
 ## Key Features
 
@@ -96,6 +33,9 @@ Video Downloader/
 ---
 
 ## Architecture Overview
+
+### System Design (UML Diagram)
+![UML Diagram](./docs/system%20design%20UML.svg)
 
 ### Separation of Concerns + SOLID Principles
 
