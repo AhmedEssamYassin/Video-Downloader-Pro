@@ -319,7 +319,7 @@ class VideoDownloaderGUI:
             font=("Segoe UI", 24),
             fg_color="transparent"
         )
-        self.statusIcon.pack(side="left", padx=(0, 12))
+        self.statusIcon.pack(side="left", padx=(0, 12), anchor="n")
         
         titleStack = ctk.CTkFrame(titleFrame, fg_color="transparent")
         titleStack.pack(side="left", fill="both", expand=True)
