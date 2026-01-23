@@ -2,21 +2,7 @@
 YouTube Downloader Pro - Main Entry Point
 
 Modern Multi-Platform Video Downloader with Fancy GUI
-Supports: YouTube, Facebook (extensible to more platforms)
-Requires: pip install yt-dlp
-
-Project Structure:
-- main.py: Application entry point
-- gui.py: Main GUI application
-- controller.py: Business logic controller
-- download_manager.py: Download operations facade
-- base_downloader.py: Abstract base class for downloaders
-- youtube_downloader.py: YouTube implementation
-- facebook_downloader.py: Facebook implementation
-- downloader_factory.py: Factory for creating downloaders
-- models.py: Data models
-- custom_widgets.py: Custom UI components
-- theme.py: UI theme configuration
+Supports: YouTube, Facebook, Instagram, TikTok (extensible to more platforms)
 """
 
 import sys
@@ -33,6 +19,29 @@ def resourcePath(relativePath):
         basePath = os.path.abspath(".")
 
     return os.path.join(basePath, relativePath)
+
+def setupGlobalFfmpeg():
+    ffmpegExe = "ffmpeg.exe"
+    ffmpegPath = None
+
+    if getattr(sys, 'frozen', False):
+        # Check ROOT of _MEIPASS (if added via --add-binary)
+        path1 = os.path.join(sys._MEIPASS, ffmpegExe)
+        # Check ASSETS folder inside _MEIPASS (if added via --add-data)
+        path2 = os.path.join(sys._MEIPASS, "assets", ffmpegExe)
+
+        if os.path.exists(path1):
+            ffmpegPath = sys._MEIPASS
+        elif os.path.exists(path2):
+            ffmpegPath = os.path.dirname(path2)
+    else:
+        # Development mode
+        possiblePath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", ffmpegExe)
+        if os.path.exists(possiblePath):
+            ffmpegPath = os.path.dirname(possiblePath)
+
+    if ffmpegPath:
+        os.environ["PATH"] += os.pathsep + ffmpegPath
 
 from src.ui.gui import VideoDownloaderGUI
 
@@ -56,4 +65,5 @@ def main():
 
 
 if __name__ == "__main__":
+    setupGlobalFfmpeg()
     main()

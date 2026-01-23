@@ -1,131 +1,245 @@
-"""
-Build script for creating executable with assets
-"""
-
-import sys
+import PyInstaller.__main__
 import os
 import shutil
+import sys
 from pathlib import Path
 
-if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8')
-    sys.stderr.reconfigure(encoding='utf-8')
-
-try:
-    import PyInstaller.__main__
-except ImportError:
-    print("ERROR: PyInstaller not found. Install it with: pip install pyinstaller")
-    sys.exit(1)
-
+# --- Dependency Imports ---
 try:
     import customtkinter
-except ImportError:
-    print("ERROR: customtkinter not found. Install it with: pip install customtkinter")
-    sys.exit(1)
-
-try:
     import yt_dlp
-except ImportError:
-    print("ERROR: yt_dlp not found. Install it with: pip install yt-dlp")
+    from yt_dlp.extractor import extractors
+except ImportError as e:
+    print(f"ERROR: Missing dependency: {e}")
+    print("Please install: pip install customtkinter yt-dlp")
     sys.exit(1)
 
-# Clean previous builds
-for dirName in ['build', 'dist']:
-    if Path(dirName).exists():
-        print(f"Cleaning {dirName}...")
-        shutil.rmtree(dirName)
+# --- Project Configuration (CAP_WITH_UNDERSCORES) ---
+APP_NAME = "VideoDownloaderPro"
+VERSION_NUMBER = "2.0.0"
+AUTHOR_NAME = "Ahmed Yassin"
+APP_DESCRIPTION = "Professional Video Downloader"
 
-# Get the path to customtkinter's internal assets
-ctkAssetsPath = Path(customtkinter.__file__).parent / "assets"
-print(f"CustomTkinter assets path: {ctkAssetsPath}")
+# --- Paths (CAP_WITH_UNDERSCORES) ---
+PROJECT_ROOT = Path(__file__).parent
+DIST_DIR = PROJECT_ROOT / "dist"
+BUILD_DIR = PROJECT_ROOT / "build"
+ASSETS_DIR = PROJECT_ROOT / "assets"
 
-# Check if icon exists
-iconPath = Path("assets/images/icon.ico")
-if not iconPath.exists():
-    print(f"WARNING: Icon not found at {iconPath}. Build will continue without icon.")
-    iconArg = []
-else:
-    iconArg = [f'--icon={iconPath}']
-    print(f"Using icon: {iconPath}")
+# Logic to find dynamic asset paths
+CTK_PATH = Path(customtkinter.__file__).parent / "assets"
 
-# Generate hooks for yt_dlp extractors 
-# yt_dlp dynamically loads all these, so PyInstaller misses them.
-ytDlpHooks = []
-try:
-    # Updated approach: collect all extractor modules
-    from yt_dlp.extractor import extractors
-    
-    # Get all extractor names from the lazy_extractors or gen_extractors
-    extractorNames = []
+# --- Helper Functions (camelCase) ---
+
+def getYtDlpExtractors():
+    """Dynamically find yt-dlp extractors to avoid missing module errors"""
     try:
-        # Try to import the list of extractors
         from yt_dlp.extractor.extractors import _ALL_CLASSES
-        extractorNames = [ie.IE_NAME for ie in _ALL_CLASSES if hasattr(ie, 'IE_NAME')]
-    except (ImportError, AttributeError):
-        # Fallback: use a broader hidden-import approach
-        print("Using fallback method for yt_dlp extractors")
-        ytDlpHooks = [
-            '--hidden-import=yt_dlp.extractor.extractors',
-            '--hidden-import=yt_dlp.extractor.common',
-            '--hidden-import=yt_dlp.extractor.generic',
-        ]
+        extractorNames = [f"yt_dlp.extractor.{ie.IE_NAME}" for ie in _ALL_CLASSES if hasattr(ie, 'IE_NAME')]
+        return extractorNames
+    except Exception:
+        return ['yt_dlp.extractor', 'yt_dlp.extractor.common', 'yt_dlp.extractor.generic']
+
+def getPlyerHooks():
+    """Check for plyer windows notification support"""
+    try:
+        import plyer.platforms.win.notification
+        return ['plyer.platforms.win.notification']
+    except ImportError:
+        return []
+
+def cleanBuildDirs():
+    """Clean previous build directories"""
+    print("Cleaning previous builds...")
+    for directory in [DIST_DIR, BUILD_DIR]:
+        if directory.exists():
+            shutil.rmtree(directory)
+    # Clean spec file
+    specFile = PROJECT_ROOT / f"{APP_NAME}.spec"
+    if specFile.exists():
+        specFile.unlink() # Deletes the file
+        print(f"Deleted spec file: {specFile}")
+
+    print("Build directories cleaned")
+
+# --- Build Logic (camelCase) ---
+
+def createSpecFile():
+    """Create PyInstaller spec file with dynamic yt-dlp hooks"""
+    ytHooks = getYtDlpExtractors()
+    plyerHooks = getPlyerHooks()
     
-    if extractorNames:
-        ytDlpHooks = [f'--hidden-import=yt_dlp.extractor.{name}' for name in extractorNames]
-        print(f"Found {len(ytDlpHooks)} yt_dlp extractors.")
-    elif not ytDlpHooks:
-        # Final fallback
-        ytDlpHooks = ['--hidden-import=yt_dlp.extractor']
-        print("Using generic yt_dlp extractor import")
-        
-except Exception as e:
-    print(f"WARNING: Could not generate yt_dlp hooks: {e}")
-    # Fallback to basic imports
-    ytDlpHooks = [
-        '--hidden-import=yt_dlp.extractor',
-        '--hidden-import=yt_dlp.extractor.common',
-        '--hidden-import=yt_dlp.extractor.generic',
+    hiddenImports = [
+        'PIL._tkinter_finder',
+        'customtkinter',
+        'yt_dlp',
+    ] + ytHooks + plyerHooks
+
+    specContent = f'''# -*- mode: python ; coding: utf-8 -*-
+
+block_cipher = None
+
+a = Analysis(
+    ['main.py'],
+    pathex=[],
+    binaries=[],
+    datas=[
+        ('assets', 'assets'),
+        (r'{CTK_PATH}', 'customtkinter/assets'),
+    ],
+    hiddenimports={hiddenImports},
+    hookspath=[],
+    hooksconfig={{}},
+    runtime_hooks=[],
+    excludes=[],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
+    noarchive=False,
+)
+
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    [],
+    name='{APP_NAME}',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=False,
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=False,
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    icon='assets/images/icon.ico' if os.path.exists('assets/images/icon.ico') else None,
+)
+'''
+    specFile = PROJECT_ROOT / f"{APP_NAME}.spec"
+    with open(specFile, 'w', encoding='utf-8') as f:
+        f.write(specContent)
+    
+    print(f"Created spec file: {specFile}")
+    return specFile
+
+def getBaseArgs():
+    """Common arguments for OneFile and OneDir"""
+    ytHooks = getYtDlpExtractors()
+    plyerHooks = getPlyerHooks()
+    
+    args = [
+        'main.py',
+        '--name', APP_NAME,
+        '--windowed',
+        '--clean',
+        '--noconfirm',
+        f'--distpath={DIST_DIR}',
+        f'--workpath={BUILD_DIR}',
+        '--add-data', f'assets{os.pathsep}assets',
+        '--add-data', f'{CTK_PATH}{os.pathsep}customtkinter/assets',
+        '--collect-all', 'yt_dlp',
+        '--hidden-import', 'PIL._tkinter_finder',
+        '--hidden-import', 'customtkinter',
     ]
 
-# Generate hooks for plyer backends (optional - for notifications)
-plyerHooks = []
-try:
-    import plyer.platforms.win.notification
-    plyerHooks = ['--hidden-import=plyer.platforms.win.notification']
-    print("Added plyer Windows backend.")
-except ImportError:
-    print("WARNING: plyer not found. Notifications may not work.")
+    for hook in (ytHooks + plyerHooks):
+        args.extend(['--hidden-import', hook])
 
-# Build with assets
-buildCommand = [
-    'main.py',
-    '--name=VideoDownloaderPro',
-    '--onefile',
-    '--windowed',
-    '--add-data=assets;assets',
-    f'--add-data={ctkAssetsPath};customtkinter/assets',
-    '--collect-all=yt_dlp',  # This ensures all yt_dlp modules are included
-    '--clean',
-    '--noconfirm',
-]
+    ffmpegPath = ASSETS_DIR / "ffmpeg.exe"
+    if ffmpegPath.exists():
+        print(f"Bundling FFmpeg from: {ffmpegPath}")
+        # Syntax is "source;dest" (Windows)
+        args.append(f'--add-binary={ffmpegPath};.') 
+    else:
+        print("WARNING: FFmpeg not found in assets. High-quality merges won't work.")
 
-# Add icon if it exists
-buildCommand.extend(iconArg)
+    iconPath = ASSETS_DIR / "images" / "icon.ico"
+    if iconPath.exists():
+        args.extend(['--icon', str(iconPath)])
+    
+    return args
 
-# Add hooks
-buildCommand.extend(ytDlpHooks)
-buildCommand.extend(plyerHooks)
+def buildOnefile():
+    """Build as single file executable"""
+    print(f"\nBuilding {APP_NAME} (One File) v{VERSION_NUMBER}...")
+    buildArgs = getBaseArgs()
+    buildArgs.append('--onefile')
+    # PyInstaller uses UPX by default if found in PATH, so no extra arg needed here
+    PyInstaller.__main__.run(buildArgs)
+    print(f"\nBuild complete! Location: {DIST_DIR / f'{APP_NAME}.exe'}")
 
-print("\n" + "="*50)
-print("Running PyInstaller with command:")
-print(" ".join(buildCommand[:10]) + "...")
-print("="*50 + "\n")
+def buildOnedir():
+    """Build as directory with executable and dependencies"""
+    print(f"\nBuilding {APP_NAME} (One Directory) v{VERSION_NUMBER}...")
+    buildArgs = getBaseArgs()
+    buildArgs.append('--onedir')
+    PyInstaller.__main__.run(buildArgs)
+    print(f"\nBuild complete! Location: {DIST_DIR / APP_NAME}")
 
-try:
-    PyInstaller.__main__.run(buildCommand)
-    print("\n" + "="*50)
-    print("[SUCCESS] Build complete! Executable in dist/ folder")
-    print("="*50)
-except Exception as e:
-    print(f"\n[ERROR] Build failed: {e}")
-    sys.exit(1)
+# --- User Interface (camelCase) ---
+
+def showMenu():
+    """Show build options menu"""
+    print("=" * 60)
+    print(f"   {APP_NAME} v{VERSION_NUMBER} - Build Script")
+    print("=" * 60)
+    print("\nBuild Options:")
+    print("   1. One File (single .exe, slower startup)")
+    print("   2. One Directory (folder with .exe, faster startup)")
+    print("   3. Custom spec file (uses specific yt-dlp hooks & UPX)")
+    print("   4. Clean build directories only")
+    print("   0. Exit")
+    print()
+    return input("Select option [1-4, 0]: ").strip()
+
+def main():
+    """Main build process"""
+    if sys.platform == 'win32':
+        sys.stdout.reconfigure(encoding='utf-8')
+
+    try:
+        userChoice = showMenu()
+        
+        if userChoice == "0":
+            return
+        
+        if userChoice == "4":
+            cleanBuildDirs()
+            return
+
+        if userChoice in ["1", "2", "3"]:
+            cleanBuildDirs()
+            if not ASSETS_DIR.exists():
+                print(f"Warning: {ASSETS_DIR} not found. Creating empty folder.")
+                ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+
+            if userChoice == "1":
+                buildOnefile()
+            elif userChoice == "2":
+                buildOnedir()
+            elif userChoice == "3":
+                specFile = createSpecFile()
+                PyInstaller.__main__.run([str(specFile), '--clean', '--noconfirm'])
+
+            print("\n" + "=" * 60)
+            print("🎉 Build process completed successfully!")
+            print("=" * 60)
+        else:
+            print("Invalid option")
+            
+    except KeyboardInterrupt:
+        print("\n\nBuild cancelled by user")
+    except Exception as buildError:
+        print(f"\nBuild failed: {buildError}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
