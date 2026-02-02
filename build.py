@@ -4,7 +4,6 @@ import shutil
 import sys
 from pathlib import Path
 
-# --- Dependency Imports ---
 try:
     import customtkinter
     import yt_dlp
@@ -14,13 +13,13 @@ except ImportError as e:
     print("Please install: pip install customtkinter yt-dlp")
     sys.exit(1)
 
-# --- Project Configuration (CAP_WITH_UNDERSCORES) ---
+# --- Project Configuration ---
 APP_NAME = "VideoDownloaderPro"
 VERSION_NUMBER = "2.0.0"
 AUTHOR_NAME = "Ahmed Yassin"
 APP_DESCRIPTION = "Professional Video Downloader"
 
-# --- Paths (CAP_WITH_UNDERSCORES) ---
+# --- Paths ---
 PROJECT_ROOT = Path(__file__).parent
 DIST_DIR = PROJECT_ROOT / "dist"
 BUILD_DIR = PROJECT_ROOT / "build"
@@ -29,7 +28,7 @@ ASSETS_DIR = PROJECT_ROOT / "assets"
 # Logic to find dynamic asset paths
 CTK_PATH = Path(customtkinter.__file__).parent / "assets"
 
-# --- Helper Functions (camelCase) ---
+# --- Helper Functions ---
 
 def getYtDlpExtractors():
     """Dynamically find yt-dlp extractors to avoid missing module errors"""
@@ -58,11 +57,11 @@ def cleanBuildDirs():
     specFile = PROJECT_ROOT / f"{APP_NAME}.spec"
     if specFile.exists():
         specFile.unlink() # Deletes the file
-        print(f"Deleted spec file: {specFile}")
+        print(f"Deleted spec file: {APP_NAME}.spec")
 
     print("Build directories cleaned")
 
-# --- Build Logic (camelCase) ---
+# --- Build Logic ---
 
 def createSpecFile():
     """Create PyInstaller spec file with dynamic yt-dlp hooks"""
@@ -184,7 +183,7 @@ def buildOnedir():
     PyInstaller.__main__.run(buildArgs)
     print(f"\nBuild complete! Location: {DIST_DIR / APP_NAME}")
 
-# --- User Interface (camelCase) ---
+# --- User Interface ---
 
 def showMenu():
     """Show build options menu"""
