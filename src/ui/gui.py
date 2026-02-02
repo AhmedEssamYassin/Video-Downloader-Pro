@@ -1,5 +1,5 @@
 """
-Enhanced main GUI with proper asset integration and internationalization
+Main GUI with proper asset integration and internationalization
 """
 
 import customtkinter as ctk
@@ -16,6 +16,8 @@ from ..data_models import DownloadConfig, PlaylistInfo
 from .history_view import HistoryView
 from .custom_messagebox import CustomMessageBox
 from ..utils import AssetLoader, getTranslation, SettingsManager
+import threading
+from ..services.update_service import UpdateService
 
 class VideoDownloaderGUI:
     """Enhanced main GUI with asset integration and i18n support"""
@@ -74,7 +76,40 @@ class VideoDownloaderGUI:
         
         # Create widgets with fade-in effect
         self._createWidgets()
-    
+
+        self.VERSION = "2.0.0" 
+        
+        # Check for updates in background
+        self.root.after(2000, self._startUpdateCheck)
+
+    def _startUpdateCheck(self):
+        """Runs update check in background thread"""
+        threading.Thread(target=self._performUpdateCheck, daemon=True).start()
+
+    def _performUpdateCheck(self):
+        isAvailable, latestVer, url = UpdateService.checkForUpdates(self.VERSION)
+        if isAvailable:
+            # Schedule UI update on main thread
+            self.root.after(0, lambda: self._showUpdateNotification(latestVer, url))
+
+    def _showUpdateNotification(self, latestVer, url):
+        """Adds a prominent update button to the header"""
+        
+        msg = f"New Update Available! (v{latestVer})"
+        self._showToast(msg, duration=5000, isSuccess=True)
+        
+        if hasattr(self, 'actionsFrame'):
+            self.updateBtn = ctk.CTkButton(
+                self.actionsFrame,
+                text=f"🚀 Update to v{latestVer}",
+                fg_color="#2ecc71", # Green color
+                hover_color="#27ae60",
+                text_color="white",
+                command=lambda: UpdateService.openDownloadPage(url)
+            )
+            # Pack it to the left of other buttons
+            self.updateBtn.pack(side="right", padx=(0, 10), before=self.settingsBtn)
+
     def _t(self, key):
         """Shorthand for getting translations"""
         return getTranslation(key, self.currentLanguage)
@@ -181,12 +216,12 @@ class VideoDownloaderGUI:
         subtitleLabel.pack(anchor="w")
         
         # Right side - Action buttons
-        actionsFrame = ctk.CTkFrame(headerFrame, fg_color="transparent")
-        actionsFrame.pack(side="right")
+        self.actionsFrame = ctk.CTkFrame(headerFrame, fg_color="transparent")
+        self.actionsFrame.pack(side="right")
         
         # Pro badge
         proBadge = ctk.CTkFrame(
-            actionsFrame,
+            self.actionsFrame,
             fg_color=Theme.GRADIENT_START,
             corner_radius=8
         )
@@ -201,8 +236,8 @@ class VideoDownloaderGUI:
         proLabel.pack(padx=12, pady=6)
 
         # Settings button
-        settingsBtn = ctk.CTkButton(
-            actionsFrame, 
+        self.settingsBtn = ctk.CTkButton(
+            self.actionsFrame, 
             text="⚙️", 
             command=self._showSettings,
             fg_color=Theme.CARD_COLOR, 
@@ -213,11 +248,11 @@ class VideoDownloaderGUI:
             font=("Segoe UI", 16),
             corner_radius=10
         )
-        settingsBtn.pack(side="right", padx=(0, 8))
+        self.settingsBtn.pack(side="right", padx=(0, 8))
 
         # History button
         historyBtn = ctk.CTkButton(
-            actionsFrame, 
+            self.actionsFrame, 
             text=f"📋 {self._t('buttons.history')}", 
             command=self._showHistory,
             fg_color=Theme.CARD_COLOR, 

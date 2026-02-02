@@ -3,6 +3,7 @@ import os
 import shutil
 import sys
 from pathlib import Path
+import update_deps
 
 try:
     import customtkinter
@@ -12,6 +13,8 @@ except ImportError as e:
     print(f"ERROR: Missing dependency: {e}")
     print("Please install: pip install customtkinter yt-dlp")
     sys.exit(1)
+
+update_deps.updateAllDeps()    
 
 # --- Project Configuration ---
 APP_NAME = "VideoDownloaderPro"
@@ -72,6 +75,9 @@ def createSpecFile():
         'PIL._tkinter_finder',
         'customtkinter',
         'yt_dlp',
+        'certifi',   
+        'brotli',    
+        'mutagen',
     ] + ytHooks + plyerHooks
 
     specContent = f'''# -*- mode: python ; coding: utf-8 -*-
@@ -147,6 +153,9 @@ def getBaseArgs():
         '--collect-all', 'yt_dlp',
         '--hidden-import', 'PIL._tkinter_finder',
         '--hidden-import', 'customtkinter',
+        '--hidden-import', 'certifi',  
+        '--hidden-import', 'brotli',   
+        '--hidden-import', 'mutagen',  
     ]
 
     for hook in (ytHooks + plyerHooks):
@@ -205,37 +214,40 @@ def main():
         sys.stdout.reconfigure(encoding='utf-8')
 
     try:
-        userChoice = showMenu()
-        
-        if userChoice == "0":
-            return
-        
-        if userChoice == "4":
-            cleanBuildDirs()
-            return
+        while(True):
+            userChoice = showMenu()
+            
+            if userChoice == "0":
+                sys.exit(0)
+            
+            if userChoice == "4":
+                cleanBuildDirs()
+                continue
 
-        if userChoice in ["1", "2", "3"]:
-            cleanBuildDirs()
-            if not ASSETS_DIR.exists():
-                print(f"Warning: {ASSETS_DIR} not found. Creating empty folder.")
-                ASSETS_DIR.mkdir(parents=True, exist_ok=True)
+            if userChoice in ["1", "2", "3"]:
+                cleanBuildDirs()
+                if not ASSETS_DIR.exists():
+                    print(f"Warning: {ASSETS_DIR} not found. Creating empty folder.")
+                    ASSETS_DIR.mkdir(parents=True, exist_ok=True)
 
-            if userChoice == "1":
-                buildOnefile()
-            elif userChoice == "2":
-                buildOnedir()
-            elif userChoice == "3":
-                specFile = createSpecFile()
-                PyInstaller.__main__.run([str(specFile), '--clean', '--noconfirm'])
+                if userChoice == "1":
+                    buildOnefile()
+                elif userChoice == "2":
+                    buildOnedir()
+                elif userChoice == "3":
+                    specFile = createSpecFile()
+                    PyInstaller.__main__.run([str(specFile), '--clean', '--noconfirm'])
 
-            print("\n" + "=" * 60)
-            print("🎉 Build process completed successfully!")
-            print("=" * 60)
-        else:
-            print("Invalid option")
+                print("\n" + "=" * 60)
+                print("🎉 Build process completed successfully!")
+                print("=" * 60)
+                break
+            else:
+                print("Invalid option")
             
     except KeyboardInterrupt:
-        print("\n\nBuild cancelled by user")
+        print("\n[EXIT] Build cancelled by user.")
+        sys.exit(0)
     except Exception as buildError:
         print(f"\nBuild failed: {buildError}")
         sys.exit(1)

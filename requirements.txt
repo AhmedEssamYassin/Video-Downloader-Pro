@@ -1,4 +1,4 @@
 customtkinter==5.2.2
 plyer==2.1.0
-PyInstaller==6.16.0
-yt_dlp==2025.10.22
+PyInstaller==6.18.0
+yt_dlp==2026.1.31

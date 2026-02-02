@@ -3,9 +3,13 @@ name: Build VideoDownloaderPro
 on:
   push:
     branches: [ "main" ]
+    tags: [ "v*" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -63,10 +67,10 @@ jobs:
           Write-Host "✅ FFmpeg placed in assets/"
         shell: pwsh
 
-      # --- Auto-select Option 2 (One directory, faster startup) ---
-      # pipe "2" into the script to bypass the menu
+      # --- Auto-select Option 1 (One file) ---
+      # pipe "1" into the script to bypass the menu
       - name: Run PyInstaller build
-        run: echo "2" | python build.py
+        run: echo "1" | python build.py
         shell: pwsh
       # ----------------------------------------------------
         
@@ -88,3 +92,14 @@ jobs:
           name: VideoDownloaderPro-Windows
           path: dist/VideoDownloaderPro/
           if-no-files-found: error
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: dist/VideoDownloaderPro.exe
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}    
