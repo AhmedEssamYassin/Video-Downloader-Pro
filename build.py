@@ -1,6 +1,7 @@
 import PyInstaller.__main__
 import os
 import shutil
+import json
 import sys
 from pathlib import Path
 import update_deps
@@ -16,9 +17,18 @@ except ImportError as e:
 
 update_deps.updateAllDeps()    
 
+def getProjectVersion():
+    try:
+        config_path = PROJECT_ROOT / "assets" / "data" / "default_config.json"
+        with open(config_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            return data.get("version", "2.0.0")
+    except Exception:
+        return "2.0.0"
+
 # --- Project Configuration ---
 APP_NAME = "VideoDownloaderPro"
-VERSION_NUMBER = "2.0.0"
+VERSION_NUMBER = getProjectVersion()
 AUTHOR_NAME = "Ahmed Yassin"
 APP_DESCRIPTION = "Professional Video Downloader"
 

@@ -77,7 +77,7 @@ class VideoDownloaderGUI:
         # Create widgets with fade-in effect
         self._createWidgets()
 
-        self.VERSION = "2.0.0" 
+        self.VERSION = self.config.get("version", "2.0.0")
         
         # Check for updates in background
         self.root.after(2000, self._startUpdateCheck)
