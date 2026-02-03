@@ -93,22 +93,49 @@ class VideoDownloaderGUI:
             self.root.after(0, lambda: self._showUpdateNotification(latestVer, url))
 
     def _showUpdateNotification(self, latestVer, url):
-        """Adds a prominent update button to the header"""
-        
+        """Show the update button"""
         msg = f"New Update Available! (v{latestVer})"
-        self._showToast(msg, duration=5000, isSuccess=True)
-        
+        self._showToast(msg, duration=1000, isSuccess=True)
+
         if hasattr(self, 'actionsFrame'):
             self.updateBtn = ctk.CTkButton(
                 self.actionsFrame,
                 text=f"🚀 Update to v{latestVer}",
-                fg_color="#2ecc71", # Green color
-                hover_color="#27ae60",
+                fg_color="#2ecc71",
                 text_color="white",
-                command=lambda: UpdateService.openDownloadPage(url)
+                command=lambda: self._startAutoUpdate(url)
             )
-            # Pack it to the left of other buttons
-            self.updateBtn.pack(side="right", padx=(0, 10), before=self.settingsBtn)
+            self.updateBtn.pack(side="right", padx=(0, 10))
+
+    def _startAutoUpdate(self, url):
+        """Handles the UI during update"""
+        # Disable button to prevent double clicks
+        self.updateBtn.configure(state="disabled", text="Downloading...")
+        
+        self.statusLabel.configure(text="Downloading Update...")
+        self.progressBar.configure(mode='determinate')
+        self.progressBar.set(0)
+        
+        # Start download in a thread
+        import threading
+        threading.Thread(
+            target=UpdateService.downloadAndInstall,
+            args=(
+                url, 
+                self._updateProgress,  # Callback for progress bar
+                None                   # Callback for completion 
+            ),
+            daemon=True
+        ).start()
+
+    def _updateProgress(self, percent):
+        """Updates the progress bar from the background thread"""
+        # Use .after to safely update UI from background thread
+        self.root.after(0, lambda: self.progressBar.set(percent))
+        self.root.after(0, lambda: self.percentLabel.configure(text=f"{int(percent*100)}%"))
+        
+        if percent >= 1.0:
+            self.root.after(0, lambda: self.statusLabel.configure(text="Restarting..."))
 
     def _t(self, key):
         """Shorthand for getting translations"""
