@@ -91,9 +91,10 @@ class UpdateService:
         batchCommands = f"""
 @echo off
 echo Updating {exeName}...
-timeout /t 2 /nobreak > NUL
+timeout /t 4 /nobreak > NUL
 del "{oldExe}"
 move "{newExe}" "{oldExe}"
+set _MEIPASS2=
 start "" "{oldExe}"
 del "%~f0"
         """
