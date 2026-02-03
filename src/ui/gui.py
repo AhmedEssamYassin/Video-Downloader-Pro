@@ -94,9 +94,6 @@ class VideoDownloaderGUI:
 
     def _showUpdateNotification(self, latestVer, url):
         """Show the update button"""
-        msg = f"New Update Available! (v{latestVer})"
-        self._showToast(msg, duration=1000, isSuccess=True)
-
         if hasattr(self, 'actionsFrame'):
             self.updateBtn = ctk.CTkButton(
                 self.actionsFrame,
