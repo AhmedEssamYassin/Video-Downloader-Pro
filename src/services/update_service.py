@@ -46,6 +46,9 @@ class UpdateService:
             # 2. Download the file
             response = requests.get(downloadUrl, stream=True)
             totalSize = int(response.headers.get('content-length', 0))
+            if response.status_code != 200:
+                print("Download failed: Status not 200")
+                return
             downloaded = 0
 
             with open(newExePath, 'wb') as file:
@@ -54,7 +57,11 @@ class UpdateService:
                     downloaded += len(data)
                     if progressCallback and totalSize > 0:
                         progressCallback(downloaded / totalSize)
-
+            if totalSize > 0 and downloaded != totalSize:
+                print(f"Download incomplete! Expected {totalSize}, got {downloaded}")
+                if os.path.exists(newExePath):
+                    os.remove(newExePath)
+                return
             # 3. Download finished
             if completedCallback:
                 completedCallback()
@@ -94,8 +101,13 @@ del "%~f0"
         with open(batchScriptPath, "w") as f:
             f.write(batchCommands)
 
-        # Run the batch script invisible
-        subprocess.Popen(batchScriptPath, shell=True)
+        # Create a copy of the environment and remove PyInstaller's internal 
+        # path variable. This ensures the new process unpacks to a FRESH directory
+        # instead of trying to reuse the old (now deleted) temp folder.
+        env = os.environ.copy()
+        env.pop('_MEIPASS2', None)
+
+        subprocess.Popen(batchScriptPath, shell=True, env=env)
         
         # Close the current app immediately so the script can delete it
         os._exit(0)
