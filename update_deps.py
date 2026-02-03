@@ -1,7 +1,6 @@
 import subprocess
 import sys
-import pkg_resources
-import importlib
+import importlib.metadata
 
 def getPackageName(line):
     line = line.strip()
@@ -32,16 +31,15 @@ def updateAllDeps():
     try:
         subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade"] + packages)
         
-        importlib.reload(pkg_resources)
-        
         newLines = []
         for pkg in packages:
             try:
-                version = pkg_resources.get_distribution(pkg).version
-                newLines.append(f"{pkg}=={version}")
-                print(f"   {pkg}: {version}")
-            except pkg_resources.DistributionNotFound:
-                print(f"   Could not find version for {pkg}, skipping...")
+                currentVersion = importlib.metadata.version(pkg)
+                
+                newLines.append(f"{pkg}=={currentVersion}")
+                print(f"   {pkg}: {currentVersion}")
+            except importlib.metadata.PackageNotFoundError:
+                print(f"   Could not find installed version for {pkg}, skipping...")
 
         with open("requirements.txt", "w") as f:
             f.write("\n".join(newLines))
