@@ -3,6 +3,7 @@ import os
 import shutil
 import json
 import sys
+import subprocess
 from pathlib import Path
 import update_deps
 
@@ -37,6 +38,7 @@ PROJECT_ROOT = Path(__file__).parent
 DIST_DIR = PROJECT_ROOT / "dist"
 BUILD_DIR = PROJECT_ROOT / "build"
 ASSETS_DIR = PROJECT_ROOT / "assets"
+UPDATER_PATH = PROJECT_ROOT / "updater.exe"
 
 # Logic to find dynamic asset paths
 CTK_PATH = Path(customtkinter.__file__).parent / "assets"
@@ -67,13 +69,55 @@ def cleanBuildDirs():
         if directory.exists():
             shutil.rmtree(directory)
     # Clean spec file
-    specFile = PROJECT_ROOT / f"{APP_NAME}.spec"
-    if specFile.exists():
-        specFile.unlink() # Deletes the file
-        print(f"Deleted spec file: {APP_NAME}.spec")
+    for specFile in PROJECT_ROOT.glob("*.spec"):
+        if specFile.is_file():
+            specFile.unlink() # Deletes the file
+            print(f"Deleted spec file: {specFile.name}")
 
     print("Build directories cleaned")
 
+def ensureUpdaterExists():
+    """Check if updater.exe exists, warn if not"""
+    if not UPDATER_PATH.exists():
+        print("\n" + "=" * 60)
+        print("WARNING: updater.exe not found!")
+        print(f"Expected location: {UPDATER_PATH}")
+        print("Auto-update feature will not work without it.")
+        print("Build updater.exe first using: pyinstaller --onefile --console --name updater updater.py")
+        print("=" * 60 + "\n")
+        return False
+    else:
+        print(f"✓ Found updater.exe: {UPDATER_PATH}")
+        return True
+
+def buildUpdater():
+    print("\n" + "=" * 60)
+    print("1/2: Building updater.exe...")
+    print("=" * 60)
+    
+    updaterArgs = [
+        sys.executable, '-m', 'PyInstaller',
+        'updater.py',
+        '--onefile',
+        '--console',
+        '--name', 'updater',
+        '--noconfirm',
+        '--clean',
+        f'--distpath={PROJECT_ROOT}',
+        f'--workpath={BUILD_DIR / "updaterBuild"}'
+    ]
+    
+    try:
+        subprocess.run(updaterArgs, check=True)
+        if UPDATER_PATH.exists():
+            print(f"Successfully built updater at: {UPDATER_PATH}")
+            return True
+        print("Updater build finished but updater.exe not found")
+        return False
+    except subprocess.CalledProcessError as err:
+        print(f"Failed to build updater: {err}")
+        return False
+        
 # --- Build Logic ---
 
 def createSpecFile():
@@ -91,6 +135,15 @@ def createSpecFile():
         'brotli',    
         'mutagen',
     ] + ytHooks + plyerHooks
+
+    datas = [
+        ('assets', 'assets'),
+        (r'{CTK_PATH}', 'customtkinter/assets'),
+    ]
+
+    if UPDATER_PATH.exists():
+        datas.append((str(UPDATER_PATH), '.'))
+        print("✓ Bundling updater.exe")
 
     specContent = f'''# -*- mode: python ; coding: utf-8 -*-
 
@@ -175,6 +228,10 @@ def getBaseArgs():
     for hook in (ytHooks + plyerHooks):
         args.extend(['--hidden-import', hook])
 
+    if UPDATER_PATH.exists():
+        args.extend(['--add-data', f'{UPDATER_PATH}{os.pathsep}.'])
+        print("✓ Bundling updater.exe with main app")
+
     ffmpegPath = ASSETS_DIR / "ffmpeg.exe"
     if ffmpegPath.exists():
         print(f"Bundling FFmpeg from: {ffmpegPath}")
@@ -191,7 +248,9 @@ def getBaseArgs():
 
 def buildOnefile():
     """Build as single file executable"""
-    print(f"\nBuilding {APP_NAME} (One File) v{VERSION_NUMBER}...")
+    print("\n" + "=" * 60)
+    print(f"2/2: Building {APP_NAME} (One File) v{VERSION_NUMBER}...")
+    print("=" * 60)
     buildArgs = getBaseArgs()
     buildArgs.append('--onefile')
     # PyInstaller uses UPX by default if found in PATH, so no extra arg needed here
@@ -200,10 +259,18 @@ def buildOnefile():
 
 def buildOnedir():
     """Build as directory with executable and dependencies"""
-    print(f"\nBuilding {APP_NAME} (One Directory) v{VERSION_NUMBER}...")
+    print("\n" + "=" * 60)
+    print(f"2/2: Building {APP_NAME} (One Directory) v{VERSION_NUMBER}...")
+    print("=" * 60)
     buildArgs = getBaseArgs()
     buildArgs.append('--onedir')
     PyInstaller.__main__.run(buildArgs)
+
+    if UPDATER_PATH.exists():
+        destUpdater = DIST_DIR / APP_NAME / "updater.exe"
+        shutil.copy2(UPDATER_PATH, destUpdater)
+        print(f"✓ Copied updater.exe to: {destUpdater}")
+
     print(f"\nBuild complete! Location: {DIST_DIR / APP_NAME}")
 
 # --- User Interface ---
@@ -244,6 +311,8 @@ def main():
                     print(f"Warning: {ASSETS_DIR} not found. Creating empty folder.")
                     ASSETS_DIR.mkdir(parents=True, exist_ok=True)
 
+                buildUpdater()
+
                 if userChoice == "1":
                     buildOnefile()
                 elif userChoice == "2":
@@ -253,7 +322,7 @@ def main():
                     PyInstaller.__main__.run([str(specFile), '--clean', '--noconfirm'])
 
                 print("\n" + "=" * 60)
-                print("🎉 Build process completed successfully!")
+                print("Build process completed successfully!")
                 print("=" * 60)
                 break
             else:

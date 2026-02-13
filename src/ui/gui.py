@@ -114,16 +114,26 @@ class VideoDownloaderGUI:
         self.progressBar.set(0)
         
         # Start download in a thread
-        import threading
-        threading.Thread(
-            target=UpdateService.downloadAndInstall,
-            args=(
-                url, 
-                self._updateProgress,  # Callback for progress bar
-                None                   # Callback for completion 
-            ),
-            daemon=True
-        ).start()
+        UpdateService.downloadAndInstall(
+            downloadUrl=url,
+            progressCallback=self._updateProgress,
+            completedCallback=lambda: self.root.after(0, lambda: self.statusLabel.configure(text="Restarting...")),
+            errorCallback=self._onUpdateError
+        )
+
+    def _onUpdateError(self, errorMsg):
+        """Safely handle update failures from the background thread"""
+        self.root.after(0, lambda: self._resetUpdateUI(errorMsg))
+
+    def _resetUpdateUI(self, errorMsg):
+        """Reset the UI if an update fails so the user can try again"""
+        if hasattr(self, 'updateBtn') and self.updateBtn.winfo_exists():
+            self.updateBtn.configure(state="normal", text=" Retry Update")
+        
+        self.progressBar.set(0)
+        self.percentLabel.configure(text="")
+        
+        self._showError(f"Update Failed: {errorMsg}")        
 
     def _updateProgress(self, percent):
         """Updates the progress bar from the background thread"""
