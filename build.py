@@ -20,8 +20,8 @@ update_deps.updateAllDeps()
 
 def getProjectVersion():
     try:
-        config_path = PROJECT_ROOT / "assets" / "data" / "default_config.json"
-        with open(config_path, 'r', encoding='utf-8') as f:
+        configPath = PROJECT_ROOT / "assets" / "data" / "default_config.json"
+        with open(configPath, 'r', encoding='utf-8') as f:
             data = json.load(f)
             return data.get("version", "2.0.0")
     except Exception:
@@ -99,7 +99,8 @@ def buildUpdater():
         sys.executable, '-m', 'PyInstaller',
         'updater.py',
         '--onefile',
-        '--console',
+        '--windowed',
+        '--icon=assets/images/icon.ico',
         '--name', 'updater',
         '--noconfirm',
         '--clean',
