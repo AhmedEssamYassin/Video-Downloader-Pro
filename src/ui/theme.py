@@ -1,40 +1,64 @@
 """
-Enhanced theme with modern design principles and smooth animations
-CustomTkinter handles light/dark switching automatically
+Modern flat theme configuration using ttkbootstrap
+Provides centralized colors, fonts, and styling for the entire application
 """
 
-import customtkinter as ctk
+import ttkbootstrap as ttk
+from ttkbootstrap.constants import *
 
 class Theme:
-    """Enhanced application color scheme with modern aesthetics"""
+    """Centralized theme configuration with modern flat design"""
     
-    # Common Colors (work well in both light and dark modes)
+    # Color Palette - Modern and minimal
     ACCENT_COLOR = "#ff6b6b"
     ACCENT_HOVER = "#ff5252"
     SECONDARY_COLOR = "#4599DE"
     SECONDARY_HOVER = "#339af0"
     SUCCESS_COLOR = "#51cf66"
-    WARNING_COLOR = "#a3850e"
+    WARNING_COLOR = "#ffc107"
     GRADIENT_START = "#667eea"
     GRADIENT_END = "#764ba2"
     
-    # Dynamic colors that adapt to light/dark mode
-    # CustomTkinter color tokens: https://customtkinter.tomschimansky.com/documentation/color
-    BG_COLOR = ("gray95", "gray14")  # (light_mode, dark_mode)
-    CARD_COLOR = ("gray98", "gray17")
-    CARD_HOVER = ("gray92", "gray20")
-    INFO_CARD_BG = ("gray96", "gray16")
-    INPUT_BG = ("gray90", "gray20")
-    INPUT_TEXT = ("gray10", "gray90")
-    INPUT_BORDER = ("gray75", "gray30")
-    DIVIDER = ("gray80", "gray25")
-    TEXT_COLOR = ("gray10", "gray90")
-    TEXT_SECONDARY = ("gray30", "gray70")
-    MUTED_COLOR = ("gray50", "gray50")
-    SHADOW_COLOR = ("gray85", "gray10")
+    # Neutral Colors
+    BG_COLOR_LIGHT = "#f5f5f5"
+    BG_COLOR_DARK = "#1a1a1a"
+    CARD_COLOR_LIGHT = "#ffffff"
+    CARD_COLOR_DARK = "#2b2b2b"
+    CARD_HOVER_LIGHT = "#f8f9fa"
+    CARD_HOVER_DARK = "#333333"
+    INFO_CARD_BG_LIGHT = "#f8f9fa"
+    INFO_CARD_BG_DARK = "#262638"
+    INPUT_BG_LIGHT = "#e9ecef"
+    INPUT_BG_DARK = "#333333"
+    INPUT_TEXT_LIGHT = "#1a1a1a"
+    INPUT_TEXT_DARK = "#e9ecef"
+    INPUT_BORDER_LIGHT = "#ced4da"
+    INPUT_BORDER_DARK = "#495057"
+    DIVIDER_LIGHT = "#dee2e6"
+    DIVIDER_DARK = "#495057"
+    TEXT_COLOR_LIGHT = "#1a1a1a"
+    TEXT_COLOR_DARK = "#e9ecef"
+    TEXT_SECONDARY_LIGHT = "#6c757d"
+    TEXT_SECONDARY_DARK = "#adb5bd"
+    MUTED_COLOR = "#6c757d"
+    SHADOW_COLOR_LIGHT = "#e9ecef"
+    SHADOW_COLOR_DARK = "#0a0a0a"
     
-    # Fonts
-    TITLE_FONT = ("Segoe UI", 32, "bold")
+    # Current theme colors (will be set based on mode)
+    BG_COLOR = BG_COLOR_DARK
+    CARD_COLOR = CARD_COLOR_DARK
+    CARD_HOVER = CARD_HOVER_DARK
+    INFO_CARD_BG = INFO_CARD_BG_DARK
+    INPUT_BG = INPUT_BG_DARK
+    INPUT_TEXT = INPUT_TEXT_DARK
+    INPUT_BORDER = INPUT_BORDER_DARK
+    DIVIDER = DIVIDER_DARK
+    TEXT_COLOR = TEXT_COLOR_DARK
+    TEXT_SECONDARY = TEXT_SECONDARY_DARK
+    SHADOW_COLOR = SHADOW_COLOR_DARK
+    
+    # Fonts - Clean and modern
+    TITLE_FONT = ("Segoe UI", 24, "bold")
     PRO_LABEL_FONT = ("Segoe UI", 13, "bold")
     SECTION_LABEL_FONT = ("Segoe UI", 13, "bold")
     NORMAL_FONT = ("Segoe UI", 13)
@@ -43,36 +67,79 @@ class Theme:
     BUTTON_FONT = ("Segoe UI", 13, "bold")
     
     # Spacing and Sizing
-    BORDER_RADIUS = 14
-    BUTTON_RADIUS = 12
-    INPUT_RADIUS = 12
-    CARD_PADDING = 24
-    ELEMENT_SPACING = 16
+    BORDER_RADIUS = 8  # Flatter, less rounded
+    BUTTON_RADIUS = 6
+    INPUT_RADIUS = 6
+    CARD_PADDING = 20
+    ELEMENT_SPACING = 12
     
     # Animation Durations (ms)
     TRANSITION_FAST = 150
     TRANSITION_NORMAL = 250
     TRANSITION_SLOW = 350
     
-    @staticmethod
-    def configureStyles():
-        """Configure CustomTkinter with enhanced appearance"""
-        ctk.set_appearance_mode("dark")
-        ctk.set_default_color_theme("blue")
+    # Current theme mode
+    current_mode = "dark"
     
     @staticmethod
-    def setTheme(theme: str):
-        """Set the application theme (dark/light)"""
-        ctk.set_appearance_mode(theme)
+    def configureStyles(root, theme="darkly"):
+        """Configure ttkbootstrap theme
         
+        Args:
+            root: The root window
+            theme: ttkbootstrap theme name (darkly, flatly, cosmo, etc.)
+        """
+        # The theme is set at initialization via ttk.Window
+        # This method can be used for additional style configuration
+        pass
+    
     @staticmethod
-    def applyHoverEffect(widget, enter_color, leave_color):
-        """Apply smooth hover effect to any widget"""
-        def on_enter(e):
-            widget.configure(fg_color=enter_color)
+    def setTheme(mode: str):
+        """Set the application theme (dark/light)
         
-        def on_leave(e):
-            widget.configure(fg_color=leave_color)
+        Args:
+            mode: "dark" or "light"
+        """
+        Theme.current_mode = mode
         
-        widget.bind("<Enter>", on_enter)
-        widget.bind("<Leave>", on_leave)
+        if mode == "light":
+            Theme.BG_COLOR = Theme.BG_COLOR_LIGHT
+            Theme.CARD_COLOR = Theme.CARD_COLOR_LIGHT
+            Theme.CARD_HOVER = Theme.CARD_HOVER_LIGHT
+            Theme.INFO_CARD_BG = Theme.INFO_CARD_BG_LIGHT
+            Theme.INPUT_BG = Theme.INPUT_BG_LIGHT
+            Theme.INPUT_TEXT = Theme.INPUT_TEXT_LIGHT
+            Theme.INPUT_BORDER = Theme.INPUT_BORDER_LIGHT
+            Theme.DIVIDER = Theme.DIVIDER_LIGHT
+            Theme.TEXT_COLOR = Theme.TEXT_COLOR_LIGHT
+            Theme.TEXT_SECONDARY = Theme.TEXT_SECONDARY_LIGHT
+            Theme.SHADOW_COLOR = Theme.SHADOW_COLOR_LIGHT
+        else:
+            Theme.BG_COLOR = Theme.BG_COLOR_DARK
+            Theme.CARD_COLOR = Theme.CARD_COLOR_DARK
+            Theme.CARD_HOVER = Theme.CARD_HOVER_DARK
+            Theme.INFO_CARD_BG = Theme.INFO_CARD_BG_DARK
+            Theme.INPUT_BG = Theme.INPUT_BG_DARK
+            Theme.INPUT_TEXT = Theme.INPUT_TEXT_DARK
+            Theme.INPUT_BORDER = Theme.INPUT_BORDER_DARK
+            Theme.DIVIDER = Theme.DIVIDER_DARK
+            Theme.TEXT_COLOR = Theme.TEXT_COLOR_DARK
+            Theme.TEXT_SECONDARY = Theme.TEXT_SECONDARY_DARK
+            Theme.SHADOW_COLOR = Theme.SHADOW_COLOR_DARK
+    
+    @staticmethod
+    def getTtkTheme(mode: str):
+        """Get the appropriate ttkbootstrap theme for the mode
+        
+        Args:
+            mode: "dark" or "light"
+            
+        Returns:
+            str: ttkbootstrap theme name
+        """
+        return "darkly" if mode == "dark" else "flatly"
+    
+    @staticmethod
+    def applyHandCursor(widget):
+        """Apply hand cursor to interactive widgets"""
+        widget.configure(cursor="hand2")

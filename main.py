@@ -7,7 +7,7 @@ Supports: YouTube, Facebook, Instagram, TikTok (extensible to more platforms)
 
 import sys
 import os
-import customtkinter as ctk
+import ttkbootstrap as ttk
 from tkinter import messagebox
 
 def resourcePath(relativePath):
@@ -44,17 +44,26 @@ def setupGlobalFfmpeg():
         os.environ["PATH"] += os.pathsep + ffmpegPath
 
 from src.ui.gui import VideoDownloaderGUI
+from src.ui.theme import Theme  
+from src.utils import SettingsManager  
 
 def main():
     """Application entry point"""
-    # Create the main window using CustomTkinter
-    root = ctk.CTk()
+    try:
+        savedTheme = SettingsManager.getTheme()  # Returns "dark" or "light"
+    except:
+        savedTheme = "dark"  # Default to dark if SettingsManager not available
+
+    Theme.setTheme(savedTheme)
+    # Create the main window using ttkbootstrap
+    ttkTheme = Theme.getTtkTheme(savedTheme)
+    root = ttk.Window(themename=ttkTheme)
 
     # Set the window icon
     try:
         iconPath = resourcePath("assets/images/icon.ico")
         root.iconbitmap(iconPath)
-    except ctk.TclError:
+    except Exception:
         print("Icon not found, skipping.")
     
     # Initialize the GUI

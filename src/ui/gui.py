@@ -1,13 +1,16 @@
 """
-Main GUI with proper asset integration and internationalization
+Main GUI with modern flat design using ttkbootstrap
+Provides the primary user interface for the video downloader
 """
 
-import customtkinter as ctk
-from tkinter import filedialog
 import tkinter as tk
+import ttkbootstrap as ttk
+from ttkbootstrap.constants import *
+from tkinter import filedialog
 import os
 from pathlib import Path
 import subprocess
+import threading
 
 from .theme import Theme
 from .custom_widgets import ModernButton, ModernEntry, AnimatedProgressBar, InfoCard
@@ -16,11 +19,11 @@ from ..data_models import DownloadConfig, PlaylistInfo
 from .history_view import HistoryView
 from .custom_messagebox import CustomMessageBox
 from ..utils import AssetLoader, getTranslation, SettingsManager
-import threading
 from ..services.update_service import UpdateService
 
+
 class VideoDownloaderGUI:
-    """Enhanced main GUI with asset integration and i18n support"""
+    """Enhanced main GUI with modern flat design"""
     
     def __init__(self, root):
         self.root = root
@@ -64,17 +67,17 @@ class VideoDownloaderGUI:
         self.qualityVar = tk.StringVar(value=SettingsManager.getDefaultQuality())
         self.formatVar = tk.StringVar(value=SettingsManager.getDefaultFormat())
         
-        # Configure styles and apply saved theme
+        # Apply saved theme
         savedTheme = SettingsManager.getTheme()
-        ctk.set_appearance_mode(savedTheme)
-        ctk.set_default_color_theme("blue")
+        Theme.setTheme(savedTheme)
         
-        self.root.configure(fg_color=Theme.BG_COLOR)
+        # Configure root background
+        self.root.configure(bg=Theme.BG_COLOR)
         
         # Toast notification container
         self.toastFrame = None
         
-        # Create widgets with fade-in effect
+        # Create widgets
         self._createWidgets()
 
         self.VERSION = self.config.get("version", "2.0.0")
@@ -95,22 +98,23 @@ class VideoDownloaderGUI:
     def _showUpdateNotification(self, latestVer, url):
         """Show the update button"""
         if hasattr(self, 'actionsFrame'):
-            self.updateBtn = ctk.CTkButton(
-                self.actionsFrame,
-                text=f"🚀 Update to v{latestVer}",
-                fg_color="#2ecc71",
-                text_color="white",
-                command=lambda: self._startAutoUpdate(url)
-            )
-            self.updateBtn.pack(side="right", padx=(0, 10))
+            self.updateBtn = ttk.Button(
+            self.actionsFrame,
+            text=f"🚀 Update to v{latestVer}",
+            command=lambda: self._startAutoUpdate(url),
+            bootstyle=SUCCESS,  # Green button
+            width=18,  # Characters (similar to history button's width=12)
+            cursor="hand2"
+        )
+        self.updateBtn.pack(side=RIGHT, padx=(0, 10), before=self.settingsBtn)
 
     def _startAutoUpdate(self, url):
         """Handles the UI during update"""
         # Disable button to prevent double clicks
-        self.updateBtn.configure(state="disabled", text="Downloading...")
+        self.updateBtn.setEnabled(False)
         
         self.statusLabel.configure(text="Downloading Update...")
-        self.progressBar.configure(mode='determinate')
+        self.progressBar.configure(mode='indeterminate')
         self.progressBar.set(0)
         
         # Start download in a thread
@@ -128,7 +132,7 @@ class VideoDownloaderGUI:
     def _resetUpdateUI(self, errorMsg):
         """Reset the UI if an update fails so the user can try again"""
         if hasattr(self, 'updateBtn') and self.updateBtn.winfo_exists():
-            self.updateBtn.configure(state="normal", text=" Retry Update")
+            self.updateBtn.setEnabled(True)
         
         self.progressBar.set(0)
         self.percentLabel.configure(text="")
@@ -155,36 +159,38 @@ class VideoDownloaderGUI:
             self.toastFrame.destroy()
         
         # Create toast frame
-        self.toastFrame = ctk.CTkFrame(
+        bgColor = Theme.SUCCESS_COLOR if isSuccess else Theme.ACCENT_COLOR
+        self.toastFrame = tk.Frame(
             self.root,
-            fg_color=Theme.SUCCESS_COLOR if isSuccess else Theme.ACCENT_COLOR,
-            corner_radius=12,
-            border_width=0
+            bg=bgColor,
+            relief=FLAT
         )
         
-        # Toast icon and message
-        toastContent = ctk.CTkFrame(self.toastFrame, fg_color="transparent")
+        # Toast content
+        toastContent = tk.Frame(self.toastFrame, bg=bgColor)
         toastContent.pack(padx=20, pady=12)
         
         icon = "✅" if isSuccess else "❌"
-        iconLabel = ctk.CTkLabel(
+        iconLabel = tk.Label(
             toastContent,
             text=icon,
             font=("Segoe UI", 16),
-            text_color="white"
+            fg="white",
+            bg=bgColor
         )
-        iconLabel.pack(side="left", padx=(0, 10))
+        iconLabel.pack(side=LEFT, padx=(0, 10))
         
-        messageLabel = ctk.CTkLabel(
+        messageLabel = tk.Label(
             toastContent,
             text=message,
             font=("Segoe UI", 12, "bold"),
-            text_color="white"
+            fg="white",
+            bg=bgColor
         )
-        messageLabel.pack(side="left")
+        messageLabel.pack(side=LEFT)
         
         # Position toast at bottom center
-        self.toastFrame.place(relx=0.5, rely=0.92, anchor="center")
+        self.toastFrame.place(relx=0.5, rely=0.92, anchor=CENTER)
         
         # Fade in
         self.toastFrame.lift()
@@ -192,7 +198,6 @@ class VideoDownloaderGUI:
     
     def _animateToastIn(self, toast, duration):
         """Animate toast in and schedule fade out"""
-        toast.configure(fg_color=toast.cget("fg_color"))
         self.root.after(duration, lambda: self._animateToastOut(toast))
     
     def _animateToastOut(self, toast):
@@ -205,116 +210,108 @@ class VideoDownloaderGUI:
     def _createWidgets(self):
         """Create and layout all GUI widgets"""
         # Main container with padding
-        mainContainer = ctk.CTkFrame(self.root, fg_color="transparent")
-        mainContainer.pack(fill="both", expand=True, padx=20, pady=20)
+        mainContainer = tk.Frame(self.root, bg=Theme.BG_COLOR)
+        mainContainer.pack(fill=BOTH, expand=True, padx=20, pady=20)
         
         self._createHeader(mainContainer)
         self._createMainCard(mainContainer)
         
     def _createHeader(self, parent):
-        """Create modern header section with gradient accent"""
-        headerFrame = ctk.CTkFrame(parent, fg_color="transparent")
-        headerFrame.pack(fill="x", pady=(0, 20))
+        """Create modern header section"""
+        headerFrame = tk.Frame(parent, bg=Theme.BG_COLOR)
+        headerFrame.pack(fill=X, pady=(0, 20))
         
-        # Left side - Title with modern styling
-        titleContainer = ctk.CTkFrame(headerFrame, fg_color="transparent")
-        titleContainer.pack(side="left")
+        # Left side - Title
+        titleContainer = tk.Frame(headerFrame, bg=Theme.BG_COLOR)
+        titleContainer.pack(side=LEFT)
         
         # App icon/logo
-        logoLabel = ctk.CTkLabel(
+        logoLabel = tk.Label(
             titleContainer,
             text="▶",
             font=("Segoe UI", 36),
-            text_color=Theme.SECONDARY_COLOR
+            fg=Theme.SECONDARY_COLOR,
+            bg=Theme.BG_COLOR
         )
-        logoLabel.pack(side="left", padx=(0, 14))
+        logoLabel.pack(side=LEFT, padx=(0, 14))
         
         # Title stack
-        titleStack = ctk.CTkFrame(titleContainer, fg_color="transparent")
-        titleStack.pack(side="left")
+        titleStack = tk.Frame(titleContainer, bg=Theme.BG_COLOR)
+        titleStack.pack(side=LEFT)
         
-        titleLabel = ctk.CTkLabel(
+        titleLabel = tk.Label(
             titleStack, 
             text=self._t("app_title"),
             font=Theme.TITLE_FONT,
-            text_color=Theme.TEXT_COLOR
+            fg=Theme.TEXT_COLOR,
+            bg=Theme.BG_COLOR
         )
-        titleLabel.pack(anchor="w")
+        titleLabel.pack(anchor=W)
         
-        subtitleLabel = ctk.CTkLabel(
+        subtitleLabel = tk.Label(
             titleStack,
             text=self._t("app_subtitle"),
             font=Theme.TINY_FONT,
-            text_color=Theme.TEXT_SECONDARY
+            fg=Theme.TEXT_SECONDARY,
+            bg=Theme.BG_COLOR
         )
-        subtitleLabel.pack(anchor="w")
+        subtitleLabel.pack(anchor=W)
         
         # Right side - Action buttons
-        self.actionsFrame = ctk.CTkFrame(headerFrame, fg_color="transparent")
-        self.actionsFrame.pack(side="right")
+        self.actionsFrame = tk.Frame(headerFrame, bg=Theme.BG_COLOR)
+        self.actionsFrame.pack(side=RIGHT)
         
         # Pro badge
-        proBadge = ctk.CTkFrame(
+        proBadge = tk.Frame(
             self.actionsFrame,
-            fg_color=Theme.GRADIENT_START,
-            corner_radius=8
+            bg=Theme.GRADIENT_START,
+            relief=FLAT
         )
-        proBadge.pack(side="left", padx=(0, 12))
+        proBadge.pack(side=LEFT, padx=(0, 12))
         
-        proLabel = ctk.CTkLabel(
+        proLabel = tk.Label(
             proBadge, 
             text="✨ PRO", 
             font=Theme.PRO_LABEL_FONT,
-            text_color="white"
+            fg="white",
+            bg=Theme.GRADIENT_START
         )
         proLabel.pack(padx=12, pady=6)
 
         # Settings button
-        self.settingsBtn = ctk.CTkButton(
+        self.settingsBtn = ttk.Button(
             self.actionsFrame, 
             text="⚙️", 
             command=self._showSettings,
-            fg_color=Theme.CARD_COLOR, 
-            hover_color=Theme.CARD_HOVER,
-            text_color=Theme.TEXT_COLOR,
-            width=45, 
-            height=38,
-            font=("Segoe UI", 16),
-            corner_radius=10
+            bootstyle=SECONDARY,
+            width=3,
+            cursor="hand2"
         )
-        self.settingsBtn.pack(side="right", padx=(0, 8))
+        self.settingsBtn.pack(side=RIGHT, padx=(0, 8))
 
         # History button
-        historyBtn = ctk.CTkButton(
+        historyBtn = ttk.Button(
             self.actionsFrame, 
             text=f"📋 {self._t('buttons.history')}", 
             command=self._showHistory,
-            fg_color=Theme.CARD_COLOR, 
-            hover_color=Theme.CARD_HOVER,
-            text_color=Theme.TEXT_COLOR,
-            width=110, 
-            height=38,
-            font=Theme.SMALL_FONT,
-            corner_radius=10
+            bootstyle=SECONDARY,
+            width=12,
+            cursor="hand2"
         )
-        historyBtn.pack(side="right", padx=(0, 12))
+        historyBtn.pack(side=RIGHT, padx=(0, 12))
         
     def _createMainCard(self, parent):
-        """Create main content card with enhanced styling"""
-        # Card with subtle shadow effect
-        cardShadow = ctk.CTkFrame(
+        """Create main content card"""
+        # Card frame
+        mainCard = tk.Frame(
             parent, 
-            fg_color=Theme.SHADOW_COLOR,
-            corner_radius=Theme.BORDER_RADIUS + 1
+            bg=Theme.CARD_COLOR, 
+            relief=FLAT,
+            borderwidth=1,
+            highlightbackground=Theme.INPUT_BORDER,
+            highlightthickness=1
         )
-        cardShadow.pack(fill="both", expand=True)
-        
-        mainCard = ctk.CTkFrame(
-            cardShadow, 
-            fg_color=Theme.CARD_COLOR, 
-            corner_radius=Theme.BORDER_RADIUS
-        )
-        mainCard.pack(fill="both", expand=True, padx=2, pady=2)
+        mainCard.pack(fill=BOTH, expand=True)
         
         self._createUrlSection(mainCard)
         self._createInfoCard(mainCard)
@@ -323,185 +320,178 @@ class VideoDownloaderGUI:
         self._createDownloadButton(mainCard)
         
     def _createUrlSection(self, parent):
-        """Create enhanced URL input section"""
-        urlSection = ctk.CTkFrame(parent, fg_color="transparent")
-        urlSection.pack(fill="x", padx=Theme.CARD_PADDING, pady=(Theme.CARD_PADDING, 0))
+        """Create URL input section"""
+        urlSection = tk.Frame(parent, bg=Theme.CARD_COLOR)
+        urlSection.pack(fill=X, padx=Theme.CARD_PADDING, pady=(Theme.CARD_PADDING, 0))
         
         # Label with icon
-        labelFrame = ctk.CTkFrame(urlSection, fg_color="transparent")
-        labelFrame.pack(anchor="w", pady=(0, 10))
+        labelFrame = tk.Frame(urlSection, bg=Theme.CARD_COLOR)
+        labelFrame.pack(anchor=W, pady=(0, 10))
         
-        urlLabel = ctk.CTkLabel(
+        urlLabel = tk.Label(
             labelFrame, 
             text=f"🔗 {self._t('labels.video_url')}", 
             font=Theme.SECTION_LABEL_FONT,
-            text_color=Theme.TEXT_COLOR
+            fg=Theme.TEXT_COLOR,
+            bg=Theme.CARD_COLOR
         )
-        urlLabel.pack(side="left")
+        urlLabel.pack(side=LEFT)
         
-        # Helper text with supported platforms
+        # Helper text
         platforms = ", ".join(self.config['supported_platforms'][:3])
-        helperText = ctk.CTkLabel(
+        helperText = tk.Label(
             labelFrame,
             text=f"• {platforms} & more",
             font=Theme.TINY_FONT,
-            text_color=Theme.MUTED_COLOR
+            fg=Theme.MUTED_COLOR,
+            bg=Theme.CARD_COLOR
         )
-        helperText.pack(side="left", padx=(8, 0))
+        helperText.pack(side=LEFT, padx=(8, 0))
         
-        urlInputFrame = ctk.CTkFrame(urlSection, fg_color="transparent")
-        urlInputFrame.pack(fill="x")
+        urlInputFrame = tk.Frame(urlSection, bg=Theme.CARD_COLOR)
+        urlInputFrame.pack(fill=X)
         
         self.urlEntry = ModernEntry(
             urlInputFrame, 
             "https://youtube.com/watch?v=...", 
             "🔗"
         )
-        self.urlEntry.pack(side="left", fill="both", expand=True, padx=(0, 12))
+        self.urlEntry.pack(side=LEFT, fill=BOTH, expand=True, padx=(0, 12))
         
         self.fetchBtn = ModernButton(
             urlInputFrame, 
             self._t("buttons.fetch_info"),
             self._onFetchClicked,
-            bgColor=Theme.SECONDARY_COLOR, 
-            hoverColor=Theme.SECONDARY_HOVER,
+            bgColor=Theme.SECONDARY_COLOR,
             width=130, 
-            height=52
+            height=56
         )
-        self.fetchBtn.pack(side="right")
+        self.fetchBtn.pack(side=RIGHT, fill=Y)
         
     def _createInfoCard(self, parent):
-        """Create enhanced video info display card"""
-        self.infoCard = InfoCard(parent)
-        self.infoCard.pack(fill="x", padx=Theme.CARD_PADDING, pady=(Theme.ELEMENT_SPACING, 0))
+        """Create video info display card"""
+        self.infoCard = tk.Frame(
+            parent,
+            bg=Theme.INFO_CARD_BG,
+            relief=FLAT,
+            borderwidth=1,
+            highlightbackground=Theme.INPUT_BORDER,
+            highlightthickness=1
+        )
+        self.infoCard.pack(fill=X, padx=Theme.CARD_PADDING, pady=(Theme.ELEMENT_SPACING, 0))
         
-        infoContent = ctk.CTkFrame(self.infoCard, fg_color="transparent")
-        infoContent.pack(expand=True, pady=16, padx=20, fill="both")
+        infoContent = tk.Frame(self.infoCard, bg=Theme.INFO_CARD_BG)
+        infoContent.pack(expand=True, pady=16, padx=20, fill=BOTH)
         
         # Status icon and title
-        titleFrame = ctk.CTkFrame(infoContent, fg_color="transparent")
-        titleFrame.pack(fill="x", anchor="w")
+        titleFrame = tk.Frame(infoContent, bg=Theme.INFO_CARD_BG)
+        titleFrame.pack(fill=X, anchor=W)
         
-        self.statusIcon = ctk.CTkLabel(
+        self.statusIcon = tk.Label(
             titleFrame,
             text="⏳",
-            font=("Segoe UI", 24),
-            fg_color="transparent"
+            font=("Segoe UI", 16),
+            bg=Theme.INFO_CARD_BG,
+            fg=Theme.TEXT_COLOR
         )
-        self.statusIcon.pack(side="left", padx=(0, 12), anchor="n")
+        self.statusIcon.pack(side=LEFT, padx=(0, 12), anchor=N)
         
-        titleStack = ctk.CTkFrame(titleFrame, fg_color="transparent")
-        titleStack.pack(side="left", fill="both", expand=True)
+        titleStack = tk.Frame(titleFrame, bg=Theme.INFO_CARD_BG)
+        titleStack.pack(side=LEFT, fill=BOTH, expand=True)
         
-        self.videoTitleEntry = ctk.CTkEntry(
+        self.videoTitleEntry = ttk.Entry(
             titleStack,
-            placeholder_text=self._t("messages.paste_url"),
             font=Theme.NORMAL_FONT,
-            text_color=Theme.TEXT_COLOR,
-            fg_color=Theme.INPUT_BG,
-            border_width=1,
-            border_color=Theme.INPUT_BORDER,
-            height=40
+            bootstyle=INFO
         )
-        self.videoTitleEntry.pack(anchor="w", fill="x")
-        
-        def onTitleFocusIn(e):
-            self.videoTitleEntry.configure(border_color=Theme.SECONDARY_COLOR)
-            
-        def onTitleFocusOut(e):
-            self.videoTitleEntry.configure(border_color=Theme.INPUT_BORDER)
+        self.videoTitleEntry.pack(anchor=W, fill=X)
+        self.videoTitleEntry.insert(0, self._t("messages.paste_url"))
+        self.videoTitleEntry.configure(state=DISABLED)
 
-        self.videoTitleEntry.bind("<FocusIn>", onTitleFocusIn)
-        self.videoTitleEntry.bind("<FocusOut>", onTitleFocusOut)
-
-        self.videoDurationLabel = ctk.CTkLabel(
+        self.videoDurationLabel = tk.Label(
             titleStack,
             text=self._t("messages.paste_url"),
             font=Theme.SMALL_FONT,
-            text_color=Theme.TEXT_SECONDARY,
-            anchor="w"
+            fg=Theme.TEXT_SECONDARY,
+            bg=Theme.INFO_CARD_BG,
+            anchor=W
         )
-        self.videoDurationLabel.pack(anchor="w", pady=(4, 0))
+        self.videoDurationLabel.pack(anchor=W, pady=(4, 0))
         
     def _createSettingsSection(self, parent):
-        """Create enhanced settings section"""
-        settingsFrame = ctk.CTkFrame(parent, fg_color="transparent")
-        settingsFrame.pack(fill="x", padx=Theme.CARD_PADDING, pady=(Theme.ELEMENT_SPACING, 0))
+        """Create settings section"""
+        settingsFrame = tk.Frame(parent, bg=Theme.CARD_COLOR)
+        settingsFrame.pack(fill=X, padx=Theme.CARD_PADDING, pady=(Theme.ELEMENT_SPACING, 0))
         
-        # Two column layout
-        leftColumn = ctk.CTkFrame(settingsFrame, fg_color="transparent")
-        leftColumn.pack(side="left", fill="both", expand=True, padx=(0, 8))
+        # Create grid layout for settings
+        settingsFrame.grid_columnconfigure(0, weight=1)
+        settingsFrame.grid_columnconfigure(1, weight=1)
         
-        self._createFormatSelection(leftColumn)
-        self._createQualitySelection(leftColumn)
+        # Left column - Format
+        formatSection = tk.Frame(settingsFrame, bg=Theme.CARD_COLOR)
+        formatSection.grid(row=0, column=0, sticky=EW, padx=(0, 8))
+        self._createFormatSelection(formatSection)
         
-        rightColumn = ctk.CTkFrame(settingsFrame, fg_color="transparent")
-        rightColumn.pack(side="right", fill="both", expand=True, padx=(8, 0))
+        # Right column - Quality
+        qualitySection = tk.Frame(settingsFrame, bg=Theme.CARD_COLOR)
+        qualitySection.grid(row=0, column=1, sticky=EW, padx=(8, 0))
+        self._createQualitySelection(qualitySection)
         
-        self._createPathSelection(rightColumn)
+        # Path selection (full width)
+        pathSection = tk.Frame(settingsFrame, bg=Theme.CARD_COLOR)
+        pathSection.grid(row=1, column=0, columnspan=2, sticky=EW, pady=(Theme.ELEMENT_SPACING, 0))
+        self._createPathSelection(pathSection)
         
     def _createFormatSelection(self, parent):
-        """Create modern format selection with toggle style"""
-        formatSection = ctk.CTkFrame(parent, fg_color="transparent")
-        formatSection.pack(fill="x")
-
-        formatLabel = ctk.CTkLabel(
-            formatSection, 
-            text=f"🎹 {self._t('labels.output_format')}", 
+        """Create format selection"""
+        formatLabel = tk.Label(
+            parent, 
+            text=f"🎬 {self._t('labels.format')}", 
             font=Theme.SECTION_LABEL_FONT,
-            text_color=Theme.TEXT_COLOR
+            fg=Theme.TEXT_COLOR,
+            bg=Theme.CARD_COLOR
         )
-        formatLabel.pack(anchor="w", pady=(0, 10))
+        formatLabel.pack(anchor=W, pady=(0, 10))
         
-        # Segmented control style
-        formatBtnFrame = ctk.CTkFrame(
-            formatSection, 
-            fg_color=Theme.INPUT_BG, 
-            corner_radius=12,
-            border_width=1,
-            border_color=Theme.INPUT_BORDER
+        # Radio button frame
+        formatBtnFrame = tk.Frame(
+            parent, 
+            bg=Theme.INPUT_BG
         )
-        formatBtnFrame.pack(fill="x", pady=3)
+        formatBtnFrame.pack(fill=X, pady=3)
         
-        self.mp4Btn = ctk.CTkRadioButton(
+        self.mp4Btn = ttk.Radiobutton(
             formatBtnFrame, 
             text=self._t("formats.video_mp4"),
             variable=self.formatVar, 
             value="MP4",
-            font=Theme.SMALL_FONT,
-            fg_color=Theme.SECONDARY_COLOR,
-            hover_color=Theme.SECONDARY_HOVER,
-            text_color=Theme.TEXT_COLOR,
             command=self._onFormatChange,
-            radiobutton_width=20,
-            radiobutton_height=20
+            bootstyle=INFO,
+            cursor="hand2"
         )
-        self.mp4Btn.pack(side="left", padx=18, pady=12)
+        self.mp4Btn.pack(side=LEFT, padx=18, pady=12)
         
-        self.mp3Btn = ctk.CTkRadioButton(
+        self.mp3Btn = ttk.Radiobutton(
             formatBtnFrame, 
             text=self._t("formats.audio_mp3"),
             variable=self.formatVar, 
             value="MP3",
-            font=Theme.SMALL_FONT,
-            fg_color=Theme.SECONDARY_COLOR,
-            hover_color=Theme.SECONDARY_HOVER,
-            text_color=Theme.TEXT_COLOR,
             command=self._onFormatChange,
-            radiobutton_width=20,
-            radiobutton_height=20
+            bootstyle=INFO,
+            cursor="hand2"
         )
-        self.mp3Btn.pack(side="left", padx=18, pady=12)
+        self.mp3Btn.pack(side=LEFT, padx=18, pady=12)
         
     def _createQualitySelection(self, parent):
-        """Create enhanced quality dropdown"""
-        qualityLabel = ctk.CTkLabel(
+        """Create quality dropdown"""
+        qualityLabel = tk.Label(
             parent, 
             text=f"⚙️ {self._t('labels.video_quality')}", 
             font=Theme.SECTION_LABEL_FONT,
-            text_color=Theme.TEXT_COLOR
+            fg=Theme.TEXT_COLOR,
+            bg=Theme.CARD_COLOR
         )
-        qualityLabel.pack(anchor="w", pady=(Theme.ELEMENT_SPACING, 10))
+        qualityLabel.pack(anchor=W, pady=(0, 10))
         
         # Get quality options from config
         qualityOptions = self.config.get('quality_options', ['best', '1080p', '720p', '480p', '360p'])
@@ -513,65 +503,55 @@ class VideoDownloaderGUI:
             variable=self.qualityVar,
             values=qualityOptions,
             font=Theme.SMALL_FONT,
-            fg_color=Theme.INPUT_BG,
-            hover_color=Theme.CARD_HOVER,
-            text_color=Theme.TEXT_COLOR,
-            corner_radius=12,
-            height=48
+            cursor="hand2"
         )
-        self.qualityCombo.pack(fill="x")
+        self.qualityCombo.pack(fill=X)
         
     def _createPathSelection(self, parent):
-        """Create enhanced output path section"""
-        pathLabel = ctk.CTkLabel(
+        """Create output path section"""
+        pathLabel = tk.Label(
             parent, 
             text=f"📁 {self._t('labels.save_location')}", 
             font=Theme.SECTION_LABEL_FONT,
-            text_color=Theme.TEXT_COLOR
+            fg=Theme.TEXT_COLOR,
+            bg=Theme.CARD_COLOR
         )
-        pathLabel.pack(anchor="w", pady=(0, 10))
+        pathLabel.pack(anchor=W, pady=(0, 10))
         
-        pathInputFrame = ctk.CTkFrame(
+        pathInputFrame = tk.Frame(
             parent, 
-            fg_color=Theme.INPUT_BG, 
-            corner_radius=12,
-            border_width=1,
-            border_color=Theme.INPUT_BORDER
+            bg=Theme.INPUT_BG
         )
-        pathInputFrame.pack(fill="x")
+        pathInputFrame.pack(fill=X)
         
-        pathEntry = ctk.CTkEntry(
+        pathEntry = ttk.Entry(
             pathInputFrame, 
             textvariable=self.outputPathVar,
             font=Theme.SMALL_FONT,
-            border_width=0,
-            fg_color="transparent",
-            text_color=Theme.TEXT_COLOR
+            bootstyle=INFO
         )
-        pathEntry.pack(side="left", fill="both", expand=True, padx=16, pady=12)
+        pathEntry.pack(side=LEFT, fill=BOTH, expand=True, padx=12, pady=8)
         
         # Open folder button
-        openDirBtn = ModernButton(
+        openDirBtn = ttk.Button(
             pathInputFrame,
-            "📂",
-            self._openDownloadPath,
-            bgColor=Theme.SECONDARY_COLOR,
-            hoverColor=Theme.SECONDARY_HOVER,
-            width=36,
-            height=36
+            text="📂",
+            command=self._openDownloadPath,
+            bootstyle=PRIMARY,
+            width=3,
+            cursor="hand2"
         )
-        openDirBtn.pack(side="right", padx=8, pady=8)
+        openDirBtn.pack(side=RIGHT, padx=(0, 8), pady=8)
 
-        browseBtn = ModernButton(
+        browseBtn = ttk.Button(
             pathInputFrame,
-            self._t("buttons.browse"),
-            self._browsePath,
-            bgColor=Theme.SECONDARY_COLOR,
-            hoverColor=Theme.SECONDARY_HOVER,
-            width=90,
-            height=36
+            text=self._t("buttons.browse"),
+            command=self._browsePath,
+            bootstyle=PRIMARY,
+            width=10,
+            cursor="hand2"
         )
-        browseBtn.pack(side="right", padx=8, pady=8)
+        browseBtn.pack(side=RIGHT, padx=(0, 4), pady=8)
         
     def _openDownloadPath(self):
         """Open the download path in file explorer"""
@@ -605,40 +585,42 @@ class VideoDownloaderGUI:
             )
 
     def _createProgressSection(self, parent):
-        """Create enhanced progress section"""
-        progressFrame = ctk.CTkFrame(parent, fg_color="transparent")
-        progressFrame.pack(fill="x", padx=Theme.CARD_PADDING, pady=(Theme.ELEMENT_SPACING, 0))
+        """Create progress section"""
+        progressFrame = tk.Frame(parent, bg=Theme.CARD_COLOR)
+        progressFrame.pack(fill=X, padx=Theme.CARD_PADDING, pady=(Theme.ELEMENT_SPACING, 0))
         
-        # Status with better hierarchy
-        statusContainer = ctk.CTkFrame(progressFrame, fg_color="transparent")
-        statusContainer.pack(fill="x", pady=(0, 10))
+        # Status container
+        statusContainer = tk.Frame(progressFrame, bg=Theme.CARD_COLOR)
+        statusContainer.pack(fill=X, pady=(0, 10))
         
-        self.statusLabel = ctk.CTkLabel(
+        self.statusLabel = tk.Label(
             statusContainer, 
             text=self._t("status.ready"),
             font=Theme.SMALL_FONT,
-            text_color=Theme.TEXT_SECONDARY,
-            anchor="w"
+            fg=Theme.TEXT_SECONDARY,
+            bg=Theme.CARD_COLOR,
+            anchor=W
         )
-        self.statusLabel.pack(side="left")
+        self.statusLabel.pack(side=LEFT)
         
-        self.percentLabel = ctk.CTkLabel(
+        self.percentLabel = tk.Label(
             statusContainer,
             text="",
             font=Theme.SMALL_FONT,
-            text_color=Theme.SECONDARY_COLOR,
-            anchor="e"
+            fg=Theme.SECONDARY_COLOR,
+            bg=Theme.CARD_COLOR,
+            anchor=E
         )
-        self.percentLabel.pack(side="right")
+        self.percentLabel.pack(side=RIGHT)
         
-        # Enhanced progress bar
+        # Progress bar
         self.progressBar = AnimatedProgressBar(progressFrame)
-        self.progressBar.pack(fill="x")
+        self.progressBar.pack(fill=X)
         self.progressBar.set(0)
         
     def _createDownloadButton(self, parent):
-        """Create enhanced download button"""
-        downloadBtnFrame = ctk.CTkFrame(parent, fg_color="transparent")
+        """Create download button"""
+        downloadBtnFrame = tk.Frame(parent, bg=Theme.CARD_COLOR)
         downloadBtnFrame.pack(pady=(Theme.ELEMENT_SPACING, Theme.CARD_PADDING))
         
         self.downloadBtn = ModernButton(
@@ -646,7 +628,6 @@ class VideoDownloaderGUI:
             f"⬇️  {self._t('buttons.download_now')}",
             self._onDownloadClicked,
             bgColor=Theme.ACCENT_COLOR,
-            hoverColor=Theme.ACCENT_HOVER,
             width=300, 
             height=54
         )
@@ -702,7 +683,7 @@ class VideoDownloaderGUI:
         if self.formatVar.get() == "MP3":
             self.qualityCombo.configure(state='disabled')
         else:
-            self.qualityCombo.configure(state='normal')
+            self.qualityCombo.configure(state='readonly')
     
     def _browsePath(self):
         """Open directory browser"""
@@ -763,6 +744,7 @@ class VideoDownloaderGUI:
     
     def _displayVideoInfo(self, videoInfo, provider=""):
         """Display fetched video information"""
+        self.videoTitleEntry.configure(state=NORMAL)
         self.statusIcon.configure(text="✅")
         
         if isinstance(videoInfo, PlaylistInfo):
@@ -876,6 +858,9 @@ class VideoDownloaderGUI:
         self.statusLabel.configure(text=self._t("status.failed"))
         self.percentLabel.configure(text="")
         self.progressBar.set(0)
-        
+        self.videoTitleEntry.configure(state=NORMAL)
+        self.videoTitleEntry.delete(0, tk.END)
+        self.videoTitleEntry.insert(0, self._t("messages.paste_url"))
+        self.videoTitleEntry.configure(state=DISABLED)
         # Show toast for errors
         self._showToast(f"Error: {errorMsg}", duration=3000, isSuccess=False)

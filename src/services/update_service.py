@@ -72,7 +72,7 @@ class UpdateService:
                 if errorCallback: errorCallback("Updater executable not found in built assets!")
                 return
 
-            # CRITICAL FIX: Copy the updater out of the PyInstaller temp directory.
+            # Copy the updater out of the PyInstaller temp directory.
             # PyInstaller deletes _MEIPASS when the main app closes. Running it from there
             # will cause lock conflicts. Moving it to the OS temp folder guarantees safe execution.
             safeUpdaterPath = os.path.join(tempfile.gettempdir(), "updater_run.exe")

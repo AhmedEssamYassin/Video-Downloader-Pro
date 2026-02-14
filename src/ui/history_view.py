@@ -1,16 +1,19 @@
 """
-Enhanced history view with proper asset integration and internationalization
+Enhanced history view window using ttkbootstrap
+Displays download history in a modern, flat design
 """
 
-import customtkinter as ctk
-from tkinter import ttk, filedialog
 import tkinter as tk
+import ttkbootstrap as ttk
+from ttkbootstrap.constants import *
+from tkinter import filedialog
 from .theme import Theme
 from .custom_messagebox import CustomMessageBox
 from ..utils import AssetLoader, getTranslation
 
-class HistoryView(ctk.CTkToplevel):
-    """Enhanced history view window with i18n support"""
+
+class HistoryView(tk.Toplevel):
+    """Enhanced history view window with modern flat design"""
 
     def __init__(self, parent, mainGUI):
         super().__init__(parent)
@@ -41,7 +44,7 @@ class HistoryView(ctk.CTkToplevel):
         centerY = int(screenHeight/2 - windowHeight/2)
         self.geometry(f'{windowWidth}x{windowHeight}+{centerX}+{centerY}')
         self.minsize(900, 600)
-        self.configure(fg_color=Theme.BG_COLOR)
+        self.configure(bg=Theme.BG_COLOR)
         
         # Make window stay on top
         self.attributes('-topmost', True)
@@ -86,36 +89,38 @@ class HistoryView(ctk.CTkToplevel):
             self.toastFrame.destroy()
         
         # Create toast frame
-        self.toastFrame = ctk.CTkFrame(
+        bgColor = Theme.SUCCESS_COLOR if isSuccess else Theme.ACCENT_COLOR
+        self.toastFrame = tk.Frame(
             self,
-            fg_color=Theme.SUCCESS_COLOR if isSuccess else Theme.ACCENT_COLOR,
-            corner_radius=12,
-            border_width=0
+            bg=bgColor,
+            relief=FLAT
         )
         
-        # Toast icon and message
-        toastContent = ctk.CTkFrame(self.toastFrame, fg_color="transparent")
+        # Toast content
+        toastContent = tk.Frame(self.toastFrame, bg=bgColor)
         toastContent.pack(padx=20, pady=12)
         
         icon = "✅" if isSuccess else "❌"
-        iconLabel = ctk.CTkLabel(
+        iconLabel = tk.Label(
             toastContent,
             text=icon,
             font=("Segoe UI", 16),
-            text_color="white"
+            fg="white",
+            bg=bgColor
         )
-        iconLabel.pack(side="left", padx=(0, 10))
+        iconLabel.pack(side=LEFT, padx=(0, 10))
         
-        messageLabel = ctk.CTkLabel(
+        messageLabel = tk.Label(
             toastContent,
             text=message,
             font=("Segoe UI", 12, "bold"),
-            text_color="white"
+            fg="white",
+            bg=bgColor
         )
-        messageLabel.pack(side="left")
+        messageLabel.pack(side=LEFT)
         
         # Position toast at bottom center
-        self.toastFrame.place(relx=0.5, rely=0.92, anchor="center")
+        self.toastFrame.place(relx=0.5, rely=0.92, anchor=CENTER)
         
         # Fade in
         self.toastFrame.lift()
@@ -123,7 +128,6 @@ class HistoryView(ctk.CTkToplevel):
     
     def _animateToastIn(self, toast, duration):
         """Animate toast in and schedule fade out"""
-        toast.configure(fg_color=toast.cget("fg_color"))
         self.after(duration, lambda: self._animateToastOut(toast))
     
     def _animateToastOut(self, toast):
@@ -141,7 +145,7 @@ class HistoryView(ctk.CTkToplevel):
         # Find longest title
         maxTitleLength = max(len(item['title']) for item in historyData)
         
-        # Approximate width: ~8 pixels per character (for Segoe UI 12)
+        # Approximate width: ~8 pixels per character
         calculatedWidth = min(maxTitleLength * 8, 300)
         
         # Ensure minimum width
@@ -151,284 +155,201 @@ class HistoryView(ctk.CTkToplevel):
         """Create and layout all GUI widgets"""
         
         # Main container
-        mainContainer = ctk.CTkFrame(self, fg_color="transparent")
-        mainContainer.pack(fill="both", expand=True, padx=20, pady=20)
+        mainContainer = tk.Frame(self, bg=Theme.BG_COLOR)
+        mainContainer.pack(fill=BOTH, expand=True, padx=20, pady=20)
         
-        # Header (fixed)
+        # Header
         self._createHeader(mainContainer)
         
-        # Content card (fixed)
-        contentCard = ctk.CTkFrame(
+        # Content card
+        contentCard = tk.Frame(
             mainContainer, 
-            fg_color=Theme.CARD_COLOR, 
-            corner_radius=Theme.BORDER_RADIUS
+            bg=Theme.CARD_COLOR,
+            relief=FLAT,
+            borderwidth=1,
+            highlightbackground=Theme.INPUT_BORDER,
+            highlightthickness=1
         )
-        contentCard.pack(fill="both", expand=True, pady=(0, 0))
+        contentCard.pack(fill=BOTH, expand=True, pady=(0, 0))
         
-        # Search/Filter bar (fixed)
+        # Search/Filter bar
         self._createFilterBar(contentCard)
         
-        # Scrollable treeview container (only this scrolls) - with fixed height
-        treeFrame = ctk.CTkFrame(contentCard, fg_color="transparent", height=350)
-        treeFrame.pack(fill="both", expand=False, padx=20, pady=(0, 16))
-        treeFrame.pack_propagate(False)  # Prevent frame from shrinking
+        # Treeview container
+        treeFrame = tk.Frame(contentCard, bg=Theme.CARD_COLOR)
+        treeFrame.pack(fill=BOTH, expand=True, padx=20, pady=(0, 16))
 
-        # Create enhanced treeview style
+        # Create treeview style
         style = ttk.Style()
-        style.theme_use('clam')
         
-        # Get current theme colors - check appearance mode
-        current_mode = ctk.get_appearance_mode().lower()
-        
-        if current_mode == "light":
-            bg_color = "#f5f5f5"
-            fg_color = "#1a1a1a"
-            field_bg = "#ffffff"
-            selected_bg = "#4dabf7"
-            heading_bg = "#e9ecef"
-            hover_bg = "#f8f9fa"
-        else:
-            bg_color = "#2b2b2b"
-            fg_color = "#e9ecef"
-            field_bg = "#2b2b2b"
-            selected_bg = Theme.SECONDARY_COLOR
-            heading_bg = "#262638"
-            hover_bg = "#333333"
-        
-        # Configure treeview colors with larger fonts
-        style.configure("Modern.Treeview",
-                       background=bg_color,
-                       foreground=fg_color,
-                       fieldbackground=field_bg,
-                       borderwidth=0,
-                       rowheight=50,
-                       font=('Segoe UI', 12))
-        
-        style.configure("Modern.Treeview.Heading",
-                       background=heading_bg,
-                       foreground=fg_color,
-                       borderwidth=0,
-                       relief="flat",
-                       font=('Segoe UI', 13, 'bold'),
-                       padding=10)
-        
-        style.map('Modern.Treeview',
-                 background=[('selected', selected_bg)],
-                 foreground=[('selected', 'white')])
-        
-        style.map('Modern.Treeview.Heading',
-                 background=[('active', hover_bg)])
-
-        # Treeview with scrollbars
+        # Configure treeview
         self.tree = ttk.Treeview(
             treeFrame, 
             columns=("Title", "URL", "Path", "Status", "Date"), 
             show="headings",
-            style="Modern.Treeview",
-            selectmode="browse"
+            selectmode=BROWSE,
+            bootstyle=INFO
         )
         
-        # Configure columns with responsive sizing
+        # Configure columns
         self.tree.heading("Title", text=f"🎬 {self._t('labels.video_title')}")
         self.tree.heading("URL", text="🔗 URL")
         self.tree.heading("Path", text=f"📁 {self._t('labels.save_location')}")
         self.tree.heading("Status", text=self._t('labels.status'))
         self.tree.heading("Date", text="📅 Date")
         
-        # Column widths - Title will be set dynamically
+        # Column widths
         self.tree.column("Title", width=300, minwidth=150)
         self.tree.column("URL", width=250, minwidth=150)
         self.tree.column("Path", width=250, minwidth=150)
         self.tree.column("Status", width=100, minwidth=80)
         self.tree.column("Date", width=140, minwidth=120)
 
-        # Vertical scrollbar
-        vScrollbarFrame = ctk.CTkFrame(treeFrame, fg_color=Theme.INPUT_BG, width=14, corner_radius=7)
-        vScrollbarFrame.pack(side="right", fill="y", padx=(10, 0))
-        
+        # Scrollbars
         vScrollbar = ttk.Scrollbar(
-            vScrollbarFrame, 
-            orient="vertical", 
-            command=self.tree.yview
+            treeFrame, 
+            orient=VERTICAL, 
+            command=self.tree.yview,
+            bootstyle=INFO
         )
         self.tree.configure(yscrollcommand=vScrollbar.set)
-        vScrollbar.pack(fill="y", expand=True)
-        
-        # Horizontal scrollbar
-        hScrollbarFrame = ctk.CTkFrame(treeFrame, fg_color=Theme.INPUT_BG, height=14, corner_radius=7)
-        hScrollbarFrame.pack(side="bottom", fill="x", pady=(10, 0))
+        vScrollbar.pack(side=RIGHT, fill=Y)
         
         hScrollbar = ttk.Scrollbar(
-            hScrollbarFrame, 
-            orient="horizontal", 
-            command=self.tree.xview
+            treeFrame, 
+            orient=HORIZONTAL, 
+            command=self.tree.xview,
+            bootstyle=INFO
         )
         self.tree.configure(xscrollcommand=hScrollbar.set)
-        hScrollbar.pack(fill="x", expand=True)
+        hScrollbar.pack(side=BOTTOM, fill=X)
         
         # Pack tree
-        self.tree.pack(side="left", fill="both", expand=True)
+        self.tree.pack(side=LEFT, fill=BOTH, expand=True)
         
-        # Add hover effect to rows
+        # Add hover effect
         self.tree.bind('<Motion>', self._onTreeHover)
         
-        # Enable horizontal scrolling with touchpad/mouse wheel
-        self.tree.bind('<Shift-MouseWheel>', self._onHorizontalScroll)
-        # For Linux
-        self.tree.bind('<Shift-Button-4>', self._onHorizontalScroll)
-        self.tree.bind('<Shift-Button-5>', self._onHorizontalScroll)
-        # For touchpad horizontal scroll
-        self.tree.bind('<MouseWheel>', self._onMouseWheel)
-
-        # Action buttons (fixed at bottom)
+        # Action buttons
         self._createActionButtons(contentCard)
-
-    def _onMouseWheel(self, event):
-        """Handle mouse wheel scrolling - vertical by default, horizontal with shift"""
-        if event.state & 0x1:  # Shift key is pressed
-            self._onHorizontalScroll(event)
-            return "break"
-        # If no shift, default vertical scroll happens automatically
-    
-    def _onHorizontalScroll(self, event):
-        """Handle horizontal scrolling with shift + wheel or touchpad"""
-        if event.num == 4 or event.delta > 0:
-            self.tree.xview_scroll(-1, "units")
-        elif event.num == 5 or event.delta < 0:
-            self.tree.xview_scroll(1, "units")
-        return "break"
 
     def _createHeader(self, parent):
         """Create header section"""
-        headerFrame = ctk.CTkFrame(parent, fg_color="transparent")
-        headerFrame.pack(fill="x", pady=(0, 16))
+        headerFrame = tk.Frame(parent, bg=Theme.BG_COLOR)
+        headerFrame.pack(fill=X, pady=(0, 16))
         
         # Title with icon
-        titleContainer = ctk.CTkFrame(headerFrame, fg_color="transparent")
-        titleContainer.pack(side="left")
+        titleContainer = tk.Frame(headerFrame, bg=Theme.BG_COLOR)
+        titleContainer.pack(side=LEFT)
         
-        iconLabel = ctk.CTkLabel(
+        iconLabel = tk.Label(
             titleContainer,
             text="📋",
-            font=("Segoe UI", 28)
+            font=("Segoe UI", 28),
+            bg=Theme.BG_COLOR,
+            fg=Theme.TEXT_COLOR
         )
-        iconLabel.pack(side="left", padx=(0, 12))
+        iconLabel.pack(side=LEFT, padx=(0, 12))
         
-        titleStack = ctk.CTkFrame(titleContainer, fg_color="transparent")
-        titleStack.pack(side="left")
+        titleStack = tk.Frame(titleContainer, bg=Theme.BG_COLOR)
+        titleStack.pack(side=LEFT)
         
-        titleLabel = ctk.CTkLabel(
+        titleLabel = tk.Label(
             titleStack, 
             text=self._t("history.title"),
             font=("Segoe UI", 24, "bold"),
-            text_color=Theme.TEXT_COLOR
+            fg=Theme.TEXT_COLOR,
+            bg=Theme.BG_COLOR
         )
-        titleLabel.pack(anchor="w")
+        titleLabel.pack(anchor=W)
         
-        subtitleLabel = ctk.CTkLabel(
+        subtitleLabel = tk.Label(
             titleStack,
             text=self._t("history.subtitle"),
             font=Theme.SMALL_FONT,
-            text_color=Theme.TEXT_SECONDARY
+            fg=Theme.TEXT_SECONDARY,
+            bg=Theme.BG_COLOR
         )
-        subtitleLabel.pack(anchor="w")
+        subtitleLabel.pack(anchor=W)
 
     def _createFilterBar(self, parent):
         """Create search/filter bar"""
-        filterFrame = ctk.CTkFrame(parent, fg_color="transparent")
-        filterFrame.pack(fill="x", padx=20, pady=(20, 16))
+        filterFrame = tk.Frame(parent, bg=Theme.CARD_COLOR)
+        filterFrame.pack(fill=X, padx=20, pady=(20, 16))
         
         # Search box
-        searchContainer = ctk.CTkFrame(
-            filterFrame,
-            fg_color=Theme.INPUT_BG,
-            corner_radius=12,
-            border_width=1,
-            border_color=Theme.INPUT_BORDER
-        )
-        searchContainer.pack(side="left", fill="both", expand=True, padx=(0, 12))
+        searchContainer = tk.Frame(filterFrame, bg=Theme.INPUT_BG)
+        searchContainer.pack(side=LEFT, fill=BOTH, expand=True, padx=(0, 12))
         
-        searchIcon = ctk.CTkLabel(
+        searchIcon = tk.Label(
             searchContainer,
             text="🔍",
-            font=("Segoe UI", 14)
+            font=("Segoe UI", 16),
+            bg=Theme.INPUT_BG,
+            fg=Theme.TEXT_COLOR
         )
-        searchIcon.pack(side="left", padx=(14, 10))
+        searchIcon.pack(side=LEFT, padx=(14, 10))
         
-        self.searchEntry = ctk.CTkEntry(
+        self.searchEntry = ttk.Entry(
             searchContainer,
-            placeholder_text=self._t("history.search_placeholder"),
             font=Theme.SMALL_FONT,
-            fg_color="transparent",
-            border_width=0,
-            text_color=Theme.INPUT_TEXT
+            bootstyle=INFO
         )
-        self.searchEntry.pack(side="left", fill="both", expand=True, padx=(0, 14), pady=12)
+        self.searchEntry.pack(side=LEFT, fill=BOTH, expand=True, padx=(0, 14), pady=12)
         self.searchEntry.bind('<KeyRelease>', self._onSearch)
         
         # Stats label
-        self.statsLabel = ctk.CTkLabel(
+        self.statsLabel = tk.Label(
             filterFrame,
             text="0 downloads",
             font=Theme.SMALL_FONT,
-            text_color=Theme.TEXT_SECONDARY
+            fg=Theme.TEXT_SECONDARY,
+            bg=Theme.CARD_COLOR
         )
-        self.statsLabel.pack(side="right")
+        self.statsLabel.pack(side=RIGHT)
 
     def _createActionButtons(self, parent):
         """Create action buttons"""
-        buttonFrame = ctk.CTkFrame(parent, fg_color="transparent")
-        buttonFrame.pack(fill="x", padx=20, pady=(0, 20))
+        buttonFrame = tk.Frame(parent, bg=Theme.CARD_COLOR)
+        buttonFrame.pack(fill=X, padx=20, pady=(0, 20))
 
         # Left side buttons
-        leftButtons = ctk.CTkFrame(buttonFrame, fg_color="transparent")
-        leftButtons.pack(side="left")
+        leftButtons = tk.Frame(buttonFrame, bg=Theme.CARD_COLOR)
+        leftButtons.pack(side=LEFT)
         
-        redownloadBtn = ctk.CTkButton(
+        redownloadBtn = ttk.Button(
             leftButtons, 
             text=f"⬇️ {self._t('history.redownload')}",
             command=self.redownloadSelected,
-            fg_color=Theme.SECONDARY_COLOR,
-            hover_color=Theme.SECONDARY_HOVER,
-            text_color=Theme.TEXT_COLOR,
-            width=150,
-            height=46,
-            corner_radius=12,
-            font=("Segoe UI", 13, "bold")
+            bootstyle=PRIMARY,
+            width=15,
+            cursor="hand2"
         )
-        redownloadBtn.pack(side="left", padx=(0, 12))
+        redownloadBtn.pack(side=LEFT, padx=(0, 12))
 
-        removeBtn = ctk.CTkButton(
+        removeBtn = ttk.Button(
             leftButtons, 
             text=f"🗑️ {self._t('history.remove')}",
             command=self.removeSelected,
-            fg_color="#CED4DA",
-            hover_color="#ADB5BD",
-            text_color="gray10",
-            width=120,
-            height=46,
-            corner_radius=12,
-            font=("Segoe UI", 13, "bold")
+            bootstyle=SECONDARY,
+            width=13,
+            cursor="hand2"
         )
-        removeBtn.pack(side="left")
+        removeBtn.pack(side=LEFT)
         
         # Right side buttons
-        rightButtons = ctk.CTkFrame(buttonFrame, fg_color="transparent")
-        rightButtons.pack(side="right")
+        rightButtons = tk.Frame(buttonFrame, bg=Theme.CARD_COLOR)
+        rightButtons.pack(side=RIGHT)
         
-        clearAllBtn = ctk.CTkButton(
+        clearAllBtn = ttk.Button(
             rightButtons, 
             text=f"🧹 {self._t('history.clear_all')}",
             command=self.clearAll,
-            fg_color=Theme.ACCENT_COLOR,
-            hover_color=Theme.ACCENT_HOVER,
-            text_color=Theme.TEXT_COLOR,
-            width=140,
-            height=46,
-            corner_radius=12,
-            font=("Segoe UI", 13, "bold")
+            bootstyle=DANGER,
+            width=15,
+            cursor="hand2"
         )
-        clearAllBtn.pack(side="right")
+        clearAllBtn.pack(side=RIGHT)
 
     def _onTreeHover(self, event):
         """Handle tree hover effects"""
@@ -465,7 +386,6 @@ class HistoryView(ctk.CTkToplevel):
                 elif 'fail' in statusDisplay.lower() or 'error' in statusDisplay.lower():
                     statusDisplay = f"❌ {statusDisplay}"
                 
-                # Don't truncate text - let horizontal scroll handle it
                 self.tree.insert("", "end", values=(
                     item['title'],
                     item['url'],
@@ -474,7 +394,7 @@ class HistoryView(ctk.CTkToplevel):
                     item['timestamp']
                 ))
         
-        # Adjust title column width based on filtered data
+        # Adjust title column width
         if filteredData:
             titleWidth = self._calculateTitleWidth(filteredData)
             self.tree.column("Title", width=titleWidth, minwidth=150)
@@ -507,7 +427,6 @@ class HistoryView(ctk.CTkToplevel):
             elif 'fail' in statusDisplay.lower() or 'error' in statusDisplay.lower():
                 statusDisplay = f"❌ {statusDisplay}"
             
-            # Don't truncate text - let horizontal scroll handle it
             self.tree.insert("", "end", values=(
                 item['title'],
                 item['url'],
@@ -534,7 +453,7 @@ class HistoryView(ctk.CTkToplevel):
         itemValues = self.tree.item(selectedItem, 'values')
         url = itemValues[1]
         
-        # Get full URL from history (in case display was truncated)
+        # Get full URL from history
         historyData = self.controller.getHistory()
         index = self.tree.index(selectedItem[0])
         fullUrl = historyData[index]['url']
@@ -548,7 +467,7 @@ class HistoryView(ctk.CTkToplevel):
                 duration=2000,
                 isSuccess=True
             )
-            self.after(500, self.destroy)  # Close after showing toast
+            self.after(500, self.destroy)
             self.mainGUI.reDownload(fullUrl, outputPath)
 
     def removeSelected(self):

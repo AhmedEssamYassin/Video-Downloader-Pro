@@ -8,12 +8,12 @@ from pathlib import Path
 import update_deps
 
 try:
-    import customtkinter
+    import ttkbootstrap
     import yt_dlp
     from yt_dlp.extractor import extractors
 except ImportError as e:
     print(f"ERROR: Missing dependency: {e}")
-    print("Please install: pip install customtkinter yt-dlp")
+    print("Please install: pip install ttkbootstrap yt-dlp")
     sys.exit(1)
 
 update_deps.updateAllDeps()    
@@ -39,9 +39,6 @@ DIST_DIR = PROJECT_ROOT / "dist"
 BUILD_DIR = PROJECT_ROOT / "build"
 ASSETS_DIR = PROJECT_ROOT / "assets"
 UPDATER_PATH = PROJECT_ROOT / "updater.exe"
-
-# Logic to find dynamic asset paths
-CTK_PATH = Path(customtkinter.__file__).parent / "assets"
 
 # --- Helper Functions ---
 
@@ -128,7 +125,7 @@ def createSpecFile():
     
     hiddenImports = [
         'PIL._tkinter_finder',
-        'customtkinter',
+        'ttkbootstrap',
         'yt_dlp',
         'requests',
         'packaging',
@@ -139,7 +136,6 @@ def createSpecFile():
 
     datas = [
         ('assets', 'assets'),
-        (r'{CTK_PATH}', 'customtkinter/assets'),
     ]
 
     if UPDATER_PATH.exists():
@@ -156,7 +152,6 @@ a = Analysis(
     binaries=[],
     datas=[
         ('assets', 'assets'),
-        (r'{CTK_PATH}', 'customtkinter/assets'),
     ],
     hiddenimports={hiddenImports},
     hookspath=[],
@@ -215,10 +210,9 @@ def getBaseArgs():
         f'--distpath={DIST_DIR}',
         f'--workpath={BUILD_DIR}',
         '--add-data', f'assets{os.pathsep}assets',
-        '--add-data', f'{CTK_PATH}{os.pathsep}customtkinter/assets',
         '--collect-all', 'yt_dlp',
         '--hidden-import', 'PIL._tkinter_finder',
-        '--hidden-import', 'customtkinter',
+        '--hidden-import', 'ttkbootstrap',
         '--hidden-import', 'requests',
         '--hidden-import', 'packaging',
         '--hidden-import', 'certifi',  

@@ -1,20 +1,21 @@
 """
-Settings dialog window with theme switcher, language selector, and preferences
+Settings dialog window using ttkbootstrap
+Provides theme switcher, language selector, and preferences with modern flat design
 """
 
-import customtkinter as ctk
-from tkinter import filedialog
 import tkinter as tk
+import ttkbootstrap as ttk
+from ttkbootstrap.constants import *
+from tkinter import filedialog
 from pathlib import Path
 
 from .theme import Theme
-from .custom_widgets import ModernButton
-from .custom_messagebox import CustomMessageBox
 from .custom_widgets import CustomDropdown
+from .custom_messagebox import CustomMessageBox
 from ..utils import AssetLoader, getTranslation, SettingsManager
 
 
-class SettingsDialog(ctk.CTkToplevel):
+class SettingsDialog(tk.Toplevel):
     """Settings dialog for user preferences"""
     
     def __init__(self, parent, mainGUI):
@@ -49,7 +50,7 @@ class SettingsDialog(ctk.CTkToplevel):
         self.geometry(f'{windowWidth}x{windowHeight}+{centerX}+{centerY}')
         self.resizable(False, False)
         
-        self.configure(fg_color=Theme.BG_COLOR)
+        self.configure(bg=Theme.BG_COLOR)
         
         # Make modal
         self.transient(parent)
@@ -76,28 +77,38 @@ class SettingsDialog(ctk.CTkToplevel):
     
     def _createWidgets(self):
         """Create all dialog widgets"""
-        mainContainer = ctk.CTkFrame(self, fg_color="transparent")
-        mainContainer.pack(fill="both", expand=True, padx=20, pady=20)
+        mainContainer = tk.Frame(self, bg=Theme.BG_COLOR)
+        mainContainer.pack(fill=BOTH, expand=True, padx=20, pady=20)
         
         # Header
         self._createHeader(mainContainer)
         
         # Settings card
-        settingsCard = ctk.CTkFrame(
+        settingsCard = tk.Frame(
             mainContainer,
-            fg_color=Theme.CARD_COLOR,
-            corner_radius=Theme.BORDER_RADIUS
+            bg=Theme.CARD_COLOR,
+            relief=FLAT,
+            borderwidth=1,
+            highlightbackground=Theme.INPUT_BORDER,
+            highlightthickness=1
         )
-        settingsCard.pack(fill="both", expand=True, pady=(0, 16))
+        settingsCard.pack(fill=BOTH, expand=True, pady=(0, 16))
         
         # Scrollable frame for settings
-        scrollFrame = ctk.CTkScrollableFrame(
-            settingsCard,
-            fg_color="transparent",
-            scrollbar_button_color=Theme.SECONDARY_COLOR,
-            scrollbar_button_hover_color=Theme.SECONDARY_HOVER
+        scrollCanvas = tk.Canvas(settingsCard, bg=Theme.CARD_COLOR, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(settingsCard, orient=VERTICAL, command=scrollCanvas.yview, bootstyle=INFO)
+        scrollFrame = tk.Frame(scrollCanvas, bg=Theme.CARD_COLOR)
+        
+        scrollFrame.bind(
+            "<Configure>",
+            lambda e: scrollCanvas.configure(scrollregion=scrollCanvas.bbox("all"))
         )
-        scrollFrame.pack(fill="both", expand=True, padx=20, pady=20)
+        
+        scrollCanvas.create_window((0, 0), window=scrollFrame, anchor=NW)
+        scrollCanvas.configure(yscrollcommand=scrollbar.set)
+        
+        scrollbar.pack(side=RIGHT, fill=Y)
+        scrollCanvas.pack(side=LEFT, fill=BOTH, expand=True, padx=20, pady=20)
         
         # Settings sections
         self._createAppearanceSection(scrollFrame)
@@ -111,145 +122,145 @@ class SettingsDialog(ctk.CTkToplevel):
     
     def _createHeader(self, parent):
         """Create header section"""
-        headerFrame = ctk.CTkFrame(parent, fg_color="transparent")
-        headerFrame.pack(fill="x", pady=(0, 16))
+        headerFrame = tk.Frame(parent, bg=Theme.BG_COLOR)
+        headerFrame.pack(fill=X, pady=(0, 16))
         
         # Icon and title
-        titleContainer = ctk.CTkFrame(headerFrame, fg_color="transparent")
-        titleContainer.pack(side="left")
+        titleContainer = tk.Frame(headerFrame, bg=Theme.BG_COLOR)
+        titleContainer.pack(side=LEFT)
         
-        iconLabel = ctk.CTkLabel(
+        iconLabel = tk.Label(
             titleContainer,
             text="⚙️",
-            font=("Segoe UI", 28)
+            font=("Segoe UI", 28),
+            bg=Theme.BG_COLOR,
+            fg=Theme.TEXT_COLOR
         )
-        iconLabel.pack(side="left", padx=(0, 12))
+        iconLabel.pack(side=LEFT, padx=(0, 12))
         
-        titleStack = ctk.CTkFrame(titleContainer, fg_color="transparent")
-        titleStack.pack(side="left")
+        titleStack = tk.Frame(titleContainer, bg=Theme.BG_COLOR)
+        titleStack.pack(side=LEFT)
         
-        titleLabel = ctk.CTkLabel(
+        titleLabel = tk.Label(
             titleStack,
             text=self._t("settings.title"),
             font=("Segoe UI", 24, "bold"),
-            text_color=Theme.TEXT_COLOR
+            fg=Theme.TEXT_COLOR,
+            bg=Theme.BG_COLOR
         )
-        titleLabel.pack(anchor="w")
+        titleLabel.pack(anchor=W)
         
-        subtitleLabel = ctk.CTkLabel(
+        subtitleLabel = tk.Label(
             titleStack,
             text=self._t("settings.subtitle"),
             font=Theme.SMALL_FONT,
-            text_color=Theme.TEXT_SECONDARY
+            fg=Theme.TEXT_SECONDARY,
+            bg=Theme.BG_COLOR
         )
-        subtitleLabel.pack(anchor="w")
+        subtitleLabel.pack(anchor=W)
     
     def _createSectionHeader(self, parent, icon, title):
         """Create a section header"""
-        headerFrame = ctk.CTkFrame(parent, fg_color="transparent")
-        headerFrame.pack(fill="x", pady=(16, 12))
+        headerFrame = tk.Frame(parent, bg=Theme.CARD_COLOR)
+        headerFrame.pack(fill=X, pady=(16, 12))
         
-        headerLabel = ctk.CTkLabel(
+        headerLabel = tk.Label(
             headerFrame,
             text=f"{icon} {title}",
             font=("Segoe UI", 16, "bold"),
-            text_color=Theme.TEXT_COLOR
+            fg=Theme.TEXT_COLOR,
+            bg=Theme.CARD_COLOR
         )
-        headerLabel.pack(side="left")
+        headerLabel.pack(side=LEFT)
         
         # Divider line
-        divider = ctk.CTkFrame(headerFrame, fg_color=Theme.DIVIDER, height=2)
-        divider.pack(side="left", fill="x", expand=True, padx=(12, 0))
+        divider = tk.Frame(headerFrame, bg=Theme.DIVIDER, height=2)
+        divider.pack(side=LEFT, fill=X, expand=True, padx=(12, 0))
     
     def _createAppearanceSection(self, parent):
         """Create appearance settings section"""
         self._createSectionHeader(parent, "🎨", self._t("settings.appearance.title"))
         
-        sectionFrame = ctk.CTkFrame(parent, fg_color=Theme.INFO_CARD_BG, corner_radius=12)
-        sectionFrame.pack(fill="x", pady=(0, 8))
+        sectionFrame = tk.Frame(parent, bg=Theme.INFO_CARD_BG)
+        sectionFrame.pack(fill=X, pady=(0, 8))
         
-        contentFrame = ctk.CTkFrame(sectionFrame, fg_color="transparent")
-        contentFrame.pack(fill="x", padx=20, pady=16)
+        contentFrame = tk.Frame(sectionFrame, bg=Theme.INFO_CARD_BG)
+        contentFrame.pack(fill=X, padx=20, pady=16)
         
         # Theme selector
-        themeFrame = ctk.CTkFrame(contentFrame, fg_color="transparent")
-        themeFrame.pack(fill="x", pady=(0, 12))
+        themeFrame = tk.Frame(contentFrame, bg=Theme.INFO_CARD_BG)
+        themeFrame.pack(fill=X, pady=(0, 12))
         
-        themeLabel = ctk.CTkLabel(
+        themeLabel = tk.Label(
             themeFrame,
             text=self._t("settings.appearance.theme"),
             font=Theme.NORMAL_FONT,
-            text_color=Theme.TEXT_COLOR
+            fg=Theme.TEXT_COLOR,
+            bg=Theme.INFO_CARD_BG
         )
-        themeLabel.pack(side="left")
+        themeLabel.pack(side=LEFT)
         
         self.themeVar = tk.StringVar(value=self.settings.get('theme', 'dark'))
         
-        themeToggleFrame = ctk.CTkFrame(themeFrame, fg_color=Theme.INPUT_BG, corner_radius=10)
-        themeToggleFrame.pack(side="right")
+        themeToggleFrame = tk.Frame(themeFrame, bg=Theme.INPUT_BG)
+        themeToggleFrame.pack(side=RIGHT)
         
-        darkBtn = ctk.CTkRadioButton(
+        darkBtn = ttk.Radiobutton(
             themeToggleFrame,
-            text="🌙 Dark",
+            text="Dark",
             variable=self.themeVar,
             value="dark",
-            font=Theme.SMALL_FONT,
-            fg_color=Theme.SECONDARY_COLOR,
-            hover_color=Theme.SECONDARY_HOVER,
-            text_color=Theme.INPUT_TEXT,
             command=self._onThemeChange,
-            radiobutton_width=18,
-            radiobutton_height=18
+            bootstyle=INFO,
+            cursor="hand2"
         )
-        darkBtn.pack(side="left", padx=12, pady=8)
+        darkBtn.pack(side=LEFT, padx=12, pady=8)
         
-        lightBtn = ctk.CTkRadioButton(
+        lightBtn = ttk.Radiobutton(
             themeToggleFrame,
-            text="☀️ Light",
+            text="Light",
             variable=self.themeVar,
             value="light",
-            font=Theme.SMALL_FONT,
-            fg_color=Theme.SECONDARY_COLOR,
-            hover_color=Theme.SECONDARY_HOVER,
-            text_color=Theme.INPUT_TEXT,
             command=self._onThemeChange,
-            radiobutton_width=18,
-            radiobutton_height=18
+            bootstyle=INFO,
+            cursor="hand2"
         )
-        lightBtn.pack(side="left", padx=12, pady=8)
+        lightBtn.pack(side=LEFT, padx=12, pady=8)
         
         # Theme description
-        themeDesc = ctk.CTkLabel(
+        themeDesc = tk.Label(
             contentFrame,
             text=self._t("settings.appearance.theme_desc"),
             font=Theme.TINY_FONT,
-            text_color=Theme.MUTED_COLOR,
+            fg=Theme.MUTED_COLOR,
+            bg=Theme.INFO_CARD_BG,
             wraplength=550,
-            justify="left"
+            justify=LEFT
         )
-        themeDesc.pack(fill="x")
+        themeDesc.pack(fill=X)
     
     def _createLanguageSection(self, parent):
         """Create language settings section"""
         self._createSectionHeader(parent, "🌐", self._t("settings.language.title"))
         
-        sectionFrame = ctk.CTkFrame(parent, fg_color=Theme.INFO_CARD_BG, corner_radius=12)
-        sectionFrame.pack(fill="x", pady=(0, 8))
+        sectionFrame = tk.Frame(parent, bg=Theme.INFO_CARD_BG)
+        sectionFrame.pack(fill=X, pady=(0, 8))
         
-        contentFrame = ctk.CTkFrame(sectionFrame, fg_color="transparent")
-        contentFrame.pack(fill="x", padx=20, pady=16)
+        contentFrame = tk.Frame(sectionFrame, bg=Theme.INFO_CARD_BG)
+        contentFrame.pack(fill=X, padx=20, pady=16)
         
         # Language selector
-        langFrame = ctk.CTkFrame(contentFrame, fg_color="transparent")
-        langFrame.pack(fill="x", pady=(0, 12))
+        langFrame = tk.Frame(contentFrame, bg=Theme.INFO_CARD_BG)
+        langFrame.pack(fill=X, pady=(0, 12))
         
-        langLabel = ctk.CTkLabel(
+        langLabel = tk.Label(
             langFrame,
             text=self._t("settings.language.select"),
             font=Theme.NORMAL_FONT,
-            text_color=Theme.TEXT_COLOR
+            fg=Theme.TEXT_COLOR,
+            bg=Theme.INFO_CARD_BG
         )
-        langLabel.pack(side="left")
+        langLabel.pack(side=LEFT)
         
         # Get available languages
         languages = AssetLoader.getAvailableLanguages()
@@ -265,89 +276,80 @@ class SettingsDialog(ctk.CTkToplevel):
             variable=self.langVar,
             values=[self.languageNames.get(lang, lang) for lang in languages],
             command=self._onLanguageChange,
-            fg_color=Theme.INPUT_BG,
-            hover_color=Theme.CARD_HOVER,
-            text_color=Theme.TEXT_COLOR,
-            width=200,
-            height=40,
-            corner_radius=10,
             font=Theme.SMALL_FONT
         )
-        self.langCombo.pack(side="right")
+        self.langCombo.pack(side=RIGHT)
         
         # Set current value
         currentLang = self.languageNames.get(self.settings.get('language', 'en'), 'English')
         self.langCombo.set(currentLang)
         
         # Language description
-        langDesc = ctk.CTkLabel(
+        langDesc = tk.Label(
             contentFrame,
             text=self._t("settings.language.restart_required"),
             font=Theme.TINY_FONT,
-            text_color=Theme.WARNING_COLOR,
+            fg=Theme.WARNING_COLOR,
+            bg=Theme.INFO_CARD_BG,
             wraplength=550,
-            justify="left"
+            justify=LEFT
         )
-        langDesc.pack(fill="x")
+        langDesc.pack(fill=X)
     
     def _createDownloadSection(self, parent):
         """Create download settings section"""
         self._createSectionHeader(parent, "⬇️", self._t("settings.downloads.title"))
         
-        sectionFrame = ctk.CTkFrame(parent, fg_color=Theme.INFO_CARD_BG, corner_radius=12)
-        sectionFrame.pack(fill="x", pady=(0, 8))
+        sectionFrame = tk.Frame(parent, bg=Theme.INFO_CARD_BG)
+        sectionFrame.pack(fill=X, pady=(0, 8))
         
-        contentFrame = ctk.CTkFrame(sectionFrame, fg_color="transparent")
-        contentFrame.pack(fill="x", padx=20, pady=16)
+        contentFrame = tk.Frame(sectionFrame, bg=Theme.INFO_CARD_BG)
+        contentFrame.pack(fill=X, padx=20, pady=16)
         
         # Default download path
-        pathFrame = ctk.CTkFrame(contentFrame, fg_color="transparent")
-        pathFrame.pack(fill="x", pady=(0, 12))
+        pathFrame = tk.Frame(contentFrame, bg=Theme.INFO_CARD_BG)
+        pathFrame.pack(fill=X, pady=(0, 12))
         
-        pathLabel = ctk.CTkLabel(
+        pathLabel = tk.Label(
             pathFrame,
             text=self._t("settings.downloads.default_path"),
             font=Theme.NORMAL_FONT,
-            text_color=Theme.TEXT_COLOR
+            fg=Theme.TEXT_COLOR,
+            bg=Theme.INFO_CARD_BG
         )
-        pathLabel.pack(anchor="w", pady=(0, 8))
+        pathLabel.pack(anchor=W, pady=(0, 8))
         
-        pathInputFrame = ctk.CTkFrame(pathFrame, fg_color=Theme.INPUT_BG, corner_radius=10)
-        pathInputFrame.pack(fill="x")
+        pathInputFrame = tk.Frame(pathFrame, bg=Theme.INPUT_BG)
+        pathInputFrame.pack(fill=X)
         
-        self.pathEntry = ctk.CTkEntry(
+        self.pathEntry = ttk.Entry(
             pathInputFrame,
             font=Theme.SMALL_FONT,
-            border_width=0,
-            fg_color="transparent",
-            text_color=Theme.TEXT_COLOR
+            bootstyle=INFO
         )
-        self.pathEntry.pack(side="left", fill="both", expand=True, padx=12, pady=10)
+        self.pathEntry.pack(side=LEFT, fill=BOTH, expand=True, padx=12, pady=10)
         
-        browseBtn = ctk.CTkButton(
+        browseBtn = ttk.Button(
             pathInputFrame,
             text="📁",
-            width=40,
-            height=32,
-            fg_color=Theme.SECONDARY_COLOR,
-            hover_color=Theme.SECONDARY_HOVER,
-            font=("Segoe UI", 14),
-            corner_radius=8,
-            command=self._browsePath
+            width=3,
+            command=self._browsePath,
+            bootstyle=PRIMARY
         )
-        browseBtn.pack(side="right", padx=8, pady=8)
+        browseBtn.pack(side=RIGHT, padx=8, pady=8)
         
         # Default quality
-        qualityFrame = ctk.CTkFrame(contentFrame, fg_color="transparent")
-        qualityFrame.pack(fill="x", pady=(0, 12))
+        qualityFrame = tk.Frame(contentFrame, bg=Theme.INFO_CARD_BG)
+        qualityFrame.pack(fill=X, pady=(0, 12))
         
-        qualityLabel = ctk.CTkLabel(
+        qualityLabel = tk.Label(
             qualityFrame,
             text=self._t("settings.downloads.default_quality"),
             font=Theme.NORMAL_FONT,
-            text_color=Theme.TEXT_COLOR
+            fg=Theme.TEXT_COLOR,
+            bg=Theme.INFO_CARD_BG
         )
-        qualityLabel.pack(side="left")
+        qualityLabel.pack(side=LEFT)
         
         self.qualityVar = tk.StringVar(value=self.settings.get('default_quality', 'best'))
         
@@ -355,26 +357,22 @@ class SettingsDialog(ctk.CTkToplevel):
             qualityFrame,
             variable=self.qualityVar,
             values=AssetLoader.getQualityOptions(),
-            fg_color=Theme.INPUT_BG,
-            hover_color=Theme.CARD_HOVER,
-            text_color=Theme.TEXT_COLOR,
-            height=40,
-            corner_radius=10,
             font=Theme.SMALL_FONT
         )
-        qualityCombo.pack(side="right")
+        qualityCombo.pack(side=RIGHT)
         
         # Default format
-        formatFrame = ctk.CTkFrame(contentFrame, fg_color="transparent")
-        formatFrame.pack(fill="x", pady=(0, 12))
+        formatFrame = tk.Frame(contentFrame, bg=Theme.INFO_CARD_BG)
+        formatFrame.pack(fill=X, pady=(0, 12))
         
-        formatLabel = ctk.CTkLabel(
+        formatLabel = tk.Label(
             formatFrame,
             text=self._t("settings.downloads.default_format"),
             font=Theme.NORMAL_FONT,
-            text_color=Theme.TEXT_COLOR
+            fg=Theme.TEXT_COLOR,
+            bg=Theme.INFO_CARD_BG
         )
-        formatLabel.pack(side="left")
+        formatLabel.pack(side=LEFT)
         
         self.formatVar = tk.StringVar(value=self.settings.get('default_format', 'MP4'))
         
@@ -382,123 +380,99 @@ class SettingsDialog(ctk.CTkToplevel):
             formatFrame,
             variable=self.formatVar,
             values=AssetLoader.getFormatOptions(),
-            fg_color=Theme.INPUT_BG,
-            hover_color=Theme.CARD_HOVER,
-            text_color=Theme.TEXT_COLOR,
-            height=40,
-            corner_radius=10,
             font=Theme.SMALL_FONT
         )
-        formatCombo.pack(side="right")
+        formatCombo.pack(side=RIGHT)
     
     def _createNotificationSection(self, parent):
         """Create notification settings section"""
         self._createSectionHeader(parent, "🔔", self._t("settings.notifications.title"))
         
-        sectionFrame = ctk.CTkFrame(parent, fg_color=Theme.INFO_CARD_BG, corner_radius=12)
-        sectionFrame.pack(fill="x", pady=(0, 8))
+        sectionFrame = tk.Frame(parent, bg=Theme.INFO_CARD_BG)
+        sectionFrame.pack(fill=X, pady=(0, 8))
         
-        contentFrame = ctk.CTkFrame(sectionFrame, fg_color="transparent")
-        contentFrame.pack(fill="x", padx=20, pady=16)
+        contentFrame = tk.Frame(sectionFrame, bg=Theme.INFO_CARD_BG)
+        contentFrame.pack(fill=X, padx=20, pady=16)
         
         # Enable notifications
         self.notificationsVar = tk.BooleanVar(value=self.settings.get('notifications_enabled', True))
         
-        notifCheckbox = ctk.CTkCheckBox(
+        notifCheckbox = ttk.Checkbutton(
             contentFrame,
             text=self._t("settings.notifications.enable"),
             variable=self.notificationsVar,
-            font=Theme.NORMAL_FONT,
-            fg_color=Theme.SECONDARY_COLOR,
-            hover_color=Theme.SECONDARY_HOVER,
-            text_color=Theme.TEXT_COLOR,
-            checkbox_width=24,
-            checkbox_height=24
+            bootstyle="round-toggle"
         )
-        notifCheckbox.pack(anchor="w", pady=(0, 8))
+        notifCheckbox.pack(anchor=W, pady=(0, 8))
         
-        notifDesc = ctk.CTkLabel(
+        notifDesc = tk.Label(
             contentFrame,
             text=self._t("settings.notifications.desc"),
             font=Theme.TINY_FONT,
-            text_color=Theme.MUTED_COLOR,
+            fg=Theme.MUTED_COLOR,
+            bg=Theme.INFO_CARD_BG,
             wraplength=550,
-            justify="left"
+            justify=LEFT
         )
-        notifDesc.pack(fill="x")
+        notifDesc.pack(fill=X)
     
     def _createAdvancedSection(self, parent):
         """Create advanced settings section"""
         self._createSectionHeader(parent, "🔧", self._t("settings.advanced.title"))
         
-        sectionFrame = ctk.CTkFrame(parent, fg_color=Theme.INFO_CARD_BG, corner_radius=12)
-        sectionFrame.pack(fill="x", pady=(0, 8))
+        sectionFrame = tk.Frame(parent, bg=Theme.INFO_CARD_BG)
+        sectionFrame.pack(fill=X, pady=(0, 8))
         
-        contentFrame = ctk.CTkFrame(sectionFrame, fg_color="transparent")
-        contentFrame.pack(fill="x", padx=20, pady=16)
+        contentFrame = tk.Frame(sectionFrame, bg=Theme.INFO_CARD_BG)
+        contentFrame.pack(fill=X, padx=20, pady=16)
         
         # Remember last path
         self.rememberPathVar = tk.BooleanVar(value=self.settings.get('remember_last_path', True))
         
-        rememberCheckbox = ctk.CTkCheckBox(
+        rememberCheckbox = ttk.Checkbutton(
             contentFrame,
             text=self._t("settings.advanced.remember_path"),
             variable=self.rememberPathVar,
-            font=Theme.NORMAL_FONT,
-            fg_color=Theme.SECONDARY_COLOR,
-            hover_color=Theme.SECONDARY_HOVER,
-            text_color=Theme.TEXT_COLOR,
-            checkbox_width=24,
-            checkbox_height=24
+            bootstyle="round-toggle"
         )
-        rememberCheckbox.pack(anchor="w", pady=(0, 12))
+        rememberCheckbox.pack(anchor=W, pady=(0, 12))
         
         # Reset button
-        resetBtn = ctk.CTkButton(
+        resetBtn = ttk.Button(
             contentFrame,
             text="🔄 " + self._t("settings.advanced.reset_defaults"),
             command=self._resetToDefaults,
-            fg_color="#6c757d",
-            hover_color="#5c636a",
-            width=200,
-            height=40,
-            corner_radius=10,
-            font=Theme.SMALL_FONT
+            bootstyle=SECONDARY,
+            width=25
         )
-        resetBtn.pack(anchor="w")
+        resetBtn.pack(anchor=W)
     
     def _createActionButtons(self, parent):
         """Create action buttons at bottom"""
-        buttonFrame = ctk.CTkFrame(parent, fg_color="transparent")
-        buttonFrame.pack(fill="x")
+        buttonFrame = tk.Frame(parent, bg=Theme.BG_COLOR)
+        buttonFrame.pack(fill=X)
         
         # Cancel button
-        cancelBtn = ctk.CTkButton(
+        cancelBtn = ttk.Button(
             buttonFrame,
             text=self._t("buttons.cancel"),
             command=self._onClose,
-            fg_color="#6c757d",
-            hover_color="#5c636a",
-            width=140,
-            height=46,
-            corner_radius=12,
-            font=("Segoe UI", 13, "bold")
+            bootstyle=SECONDARY,
+            width=15,
+            cursor="hand2"
         )
-        cancelBtn.pack(side="left", padx=(0, 12))
+        cancelBtn.pack(side=LEFT, padx=(0, 12))
         
         # Save button
-        saveBtn = ctk.CTkButton(
+        saveBtn = ttk.Button(
             buttonFrame,
             text="💾 " + self._t("buttons.save"),
             command=self._saveSettings,
-            fg_color=Theme.SECONDARY_COLOR,
-            hover_color=Theme.SECONDARY_HOVER,
-            width=140,
-            height=46,
-            corner_radius=12,
-            font=("Segoe UI", 13, "bold")
+            bootstyle=PRIMARY,
+            width=15,
+            cursor="hand2"
         )
-        saveBtn.pack(side="right")
+        saveBtn.pack(side=RIGHT)
     
     def _loadCurrentSettings(self):
         """Load current settings into UI"""
@@ -526,7 +500,8 @@ class SettingsDialog(ctk.CTkToplevel):
     
     def _onThemeChange(self):
         """Handle theme change"""
-        pass
+        self.needsRestart = True
+        
 
     def _onLanguageChange(self, selection):
         """Handle language change"""
@@ -565,10 +540,7 @@ class SettingsDialog(ctk.CTkToplevel):
             self.langCombo.set(self.languageNames.get(lang, 'English'))
             
             # Apply theme
-            try:
-                ctk.set_appearance_mode(self.settings.get('theme', 'dark'))
-            except Exception as e:
-                print(f"Error applying theme: {e}")
+            Theme.setTheme(self.settings.get('theme', 'dark'))
     
     def _saveSettings(self):
         """Save all settings"""
@@ -586,16 +558,13 @@ class SettingsDialog(ctk.CTkToplevel):
         langName = self.langCombo.get()
         langMap = {v: k for k, v in self.languageNames.items()}
         newSettings['language'] = langMap.get(langName, 'en')
-        
+            
         # Save to file
         success = SettingsManager.saveSettings(newSettings)
         
         if success:
-            # Apply theme immediately using CustomTkinter's built-in system
-            try:
-                ctk.set_appearance_mode(newSettings['theme'])
-            except Exception as e:
-                print(f"Error applying theme: {e}")
+            # Apply theme immediately
+            Theme.setTheme(newSettings['theme'])
             
             # Update main GUI settings
             self.mainGUI.config = AssetLoader.loadConfig()
@@ -604,7 +573,6 @@ class SettingsDialog(ctk.CTkToplevel):
             
             # Update main GUI variables if needed
             if hasattr(self.mainGUI, 'outputPathVar'):
-                # Only update if remember_last_path is False
                 if not newSettings['remember_last_path']:
                     self.mainGUI.outputPathVar.set(newSettings['default_download_path'])
             if hasattr(self.mainGUI, 'qualityVar'):
@@ -616,16 +584,16 @@ class SettingsDialog(ctk.CTkToplevel):
                 CustomMessageBox.showInfo(
                     self,
                     self._t("settings.restart_title"),
-                    self._t("settings.restart_message")
+                    self._t("settings.restart_message") + "\n\nPlease close and reopen the application for the changes to take effect."
                 )
+                self.destroy()
             else:
                 CustomMessageBox.showInfo(
                     self,
                     self._t("settings.saved_title"),
                     self._t("settings.saved_message")
                 )
-            
-            self.destroy()
+                self.destroy()
         else:
             CustomMessageBox.showError(
                 self,
