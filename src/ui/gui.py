@@ -111,7 +111,7 @@ class VideoDownloaderGUI:
     def _startAutoUpdate(self, url):
         """Handles the UI during update"""
         # Disable button to prevent double clicks
-        self.updateBtn.setEnabled(False)
+        self.updateBtn.configure(state="disabled")
         
         self.statusLabel.configure(text="Downloading Update...")
         self.progressBar.configure(mode='indeterminate')
@@ -132,7 +132,7 @@ class VideoDownloaderGUI:
     def _resetUpdateUI(self, errorMsg):
         """Reset the UI if an update fails so the user can try again"""
         if hasattr(self, 'updateBtn') and self.updateBtn.winfo_exists():
-            self.updateBtn.setEnabled(True)
+            self.updateBtn.configure(state="normal")
         
         self.progressBar.set(0)
         self.percentLabel.configure(text="")
