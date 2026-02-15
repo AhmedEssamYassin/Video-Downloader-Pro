@@ -23,6 +23,7 @@
 - **Download History** - View, search, and manage past downloads
 - **Re-download** - Easy re-download from history
 - **Desktop Notifications** - Get notified when downloads complete
+- **Auto-Updater** - Seamless background version checking and self-updating executable replacement.
 - **URL Detection** - Automatic platform detection and validation
 
 ### Technical Highlights
@@ -30,6 +31,8 @@
 - **Modular Architecture** - SOLID principles and design patterns
 - **Extensible** - Easy to add new platforms without breaking existing code
 - **Error Handling** - Comprehensive error messages and recovery
+- **Smart String Sanitization** - Automatically strips bidirectional text, emojis, and invalid characters from titles to guarantee Windows file-system compatibility.
+- **Windows API Safeguards** - Implements defensive truncation for desktop notifications to prevent thread crashes caused by Windows API (`NOTIFYICONDATAW`) character limits.
 ---
 
 ## Architecture Overview
@@ -55,6 +58,7 @@
 3. **Service Layer** (`services/`)
    - `history_service.py` - Persistent download history (JSON storage)
    - `notification_service.py` - Desktop notifications via plyer
+   - `update_service.py` - Thread-safe application self-updating, handling PyInstaller temporary environment cleanup and executable hot-swapping.
    - **Abstraction** - Platform-independent services
 
 4. **Download Strategy Layer** (`downloaders/`) - **OCP Implementation** ⭐
@@ -88,7 +92,7 @@ yt-dlp (External Library)
 Downloaded File + History Entry
 ```
 
-## 🎯 SOLID Principles Applied
+## SOLID Principles Applied
 
 ### S - Single Responsibility Principle
 Each module has one clear purpose:
@@ -208,8 +212,10 @@ main.py (Application Entry Point)
     │   │       └── src.downloaders.twitter_downloader.py (Strategy)
     │   ├── src.services.history_service.py
     │   ├── src.services.notification_service.py
+    │   ├── src.services.update_service.py
     │   ├── src.utils.settings_manager.py
     │   │   └── src.utils.asset_loader.py
+    │   ├── src.utils.file_utils.py (Sanitization)
     │   └── src.data_models.models.py
     └── src.utils.asset_loader.py (For icons/images)
 ```
@@ -301,7 +307,7 @@ class NewPlatformDownloader(BaseDownloader):
 # DownloaderFactory.registerDownloader(NewPlatformDownloader())
 ```
 
-That's it! One file = one new platform support! 🎉
+That's it! One file = one new platform support! 
 
 ## Usage Example
 
@@ -447,7 +453,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### Third-Party Libraries
 
 - [yt-dlp](https://github.com/yt-dlp/yt-dlp) - Video download engine
-- [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter) - Modern UI framework
+- [ttkbootstrap](https://github.com/israel-dryer/ttkbootstrap) - Modern UI framework
 - [plyer](https://github.com/kivy/plyer) - Desktop notifications
 - [Pillow](https://python-pillow.org/) - Image processing
 
