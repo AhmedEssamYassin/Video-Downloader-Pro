@@ -7,6 +7,7 @@ from .download_manager import DownloadManager
 from ..data_models import DownloadConfig, PlaylistInfo
 from ..services import HistoryService
 from ..services import DesktopNotifier
+from ..utils.file_utils import sanitizeFilename
 
 class DownloadController:
     """Coordinates download operations and manages state"""
@@ -67,22 +68,26 @@ class DownloadController:
             try:
                 if isinstance(self.videoInfo, PlaylistInfo):
                     for video in self.videoInfo.videos:
+                        sanTitle = sanitizeFilename(video['title'])
                         DownloadManager.downloadVideo(
                             video['url'],
                             config.outputPath,
                             config.quality,
                             config.formatType,
-                            progressCallback
+                            progressCallback,
+                            title=sanTitle
                         )
                         self.historyService.addEntry(video['title'], video['url'], config.outputPath, "Completed")
                 else:
+                    originalTitle = title if title else self.videoInfo.title
+                    sanTitle = sanitizeFilename(originalTitle)
                     DownloadManager.downloadVideo(
                         config.url,
                         config.outputPath,
                         config.quality,
                         config.formatType,
                         progressCallback,
-                        title
+                        title=sanTitle
                     )
                     self.historyService.addEntry(self.videoInfo.title, config.url, config.outputPath, "Completed")
                 

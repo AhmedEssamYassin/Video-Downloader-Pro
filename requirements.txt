@@ -1,6 +1,6 @@
 ttkbootstrap==1.20.1
 plyer==2.1.0
-PyInstaller==6.18.0
+PyInstaller==6.19.0
 yt_dlp==2026.2.4
 requests==2.32.5
 packaging==26.0

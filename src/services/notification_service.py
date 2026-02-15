@@ -43,15 +43,28 @@ class DesktopNotifier(NotificationService):
         
         return None
 
+    """
+    Desktop notifications in Windows are handled by the NOTIFYICONDATAW API structure, 
+    which has extremely strict, hardcoded memory limits for strings. 
+    If a program attempts to pass a string longer than these limits, the OS rejects it, 
+    causing libraries like plyer to throw a ValueError and crash the thread.
+
+    Title Limit: The notification title cannot exceed 64 characters.
+
+    Message Limit: The notification message body cannot exceed 256 characters.
+    """
+
     def sendNotification(self, title: str, message: str):
         if self.notification:
             try:
+                safeTitle = title[:60] + "..." if len(title) > 64 else title
+                safeMsg = message[:250] + "..." if len(message) > 256 else message
                 # Get the icon path
                 iconPath = self._getIconPath()
 
                 kwargs = {
-                    'title': title,
-                    'message': message,
+                    'title': safeTitle,
+                    'message': safeMsg,
                     'app_name': "Video Downloader Pro",
                     'timeout': 10
                 }
