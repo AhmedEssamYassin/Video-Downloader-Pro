@@ -190,7 +190,7 @@ class VideoDownloaderGUI:
         messageLabel.pack(side=LEFT)
         
         # Position toast at bottom center
-        self.toastFrame.place(relx=0.5, rely=0.92, anchor=CENTER)
+        self.toastFrame.place(relx=0.5, rely=0.89, anchor=CENTER)
         
         # Fade in
         self.toastFrame.lift()
@@ -229,7 +229,7 @@ class VideoDownloaderGUI:
         logoLabel = tk.Label(
             titleContainer,
             text="▶",
-            font=("Segoe UI", 36),
+            font=("Segoe UI", 48),
             fg=Theme.SECONDARY_COLOR,
             bg=Theme.BG_COLOR
         )
@@ -292,7 +292,7 @@ class VideoDownloaderGUI:
         # History button
         historyBtn = ttk.Button(
             self.actionsFrame, 
-            text=f"📋 {self._t('buttons.history')}", 
+            text=f"{self._t('buttons.history')}", 
             command=self._showHistory,
             bootstyle=SECONDARY,
             width=12,
@@ -363,8 +363,9 @@ class VideoDownloaderGUI:
             self._t("buttons.fetch_info"),
             self._onFetchClicked,
             bgColor=Theme.SECONDARY_COLOR,
-            width=130, 
-            height=56
+            width=110, 
+            height=56,
+            font=("Segoe UI", 14, "bold")
         )
         self.fetchBtn.pack(side=RIGHT, fill=Y)
         

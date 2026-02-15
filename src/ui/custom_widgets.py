@@ -13,7 +13,7 @@ class ModernButton(ttk.Button):
     """Enhanced modern button with clean styling"""
     
     def __init__(self, parent, text, command, bgColor="#4dabf7", hoverColor="#339af0", 
-                 textColor="white", width=200, height=48, icon=None):
+                 textColor="white", width=200, height=48, icon=None, font=None):
         
         # Map background color to bootstyle
         bootstyle = self._getBootstyle(bgColor)
@@ -31,6 +31,19 @@ class ModernButton(ttk.Button):
         self._command = command
         self._enabled = True
         
+        if font:
+            # 1. Create a truly unique style name so it doesn't overwrite other buttons
+            customStyleName = f"CustomFont_{id(self)}.{bootstyle}.TButton"
+            
+            # 2. Grab the global style engine
+            styleEngine = ttk.Style()
+            
+            # 3. Apply the custom font to our new unique style
+            styleEngine.configure(customStyleName, font=font)
+            
+            # 4. Attach this new style to this specific button
+            self.configure(style=customStyleName)
+            
     def _getBootstyle(self, bgColor):
         """Map color to ttkbootstrap style"""
         if bgColor in [Theme.SECONDARY_COLOR, "#4dabf7"]:
